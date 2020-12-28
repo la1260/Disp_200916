@@ -26,11 +26,11 @@ public class Main {
 	public static void main(String[] args) {
 		new Main();
 /*		TreeMap<Long, String> tm= new TreeMap<Long, String>();
-		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.OCTOBER, 25).getTimeInMillis(), 2), "vízszámla");
-		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.OCTOBER, 15).getTimeInMillis(), 1), "villanyóra, gázszámla");
-		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.NOVEMBER, 4).getTimeInMillis(), 1), "gázóra, villanyszámla");
-		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.NOVEMBER, 1).getTimeInMillis(), 1), "flipszámla");
-		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.NOVEMBER, 7).getTimeInMillis(), 3), "szemétdíj, biztosítás");
+		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.OCTOBER, 25).getTimeInMillis(), 2), "v��zsz��mla");
+		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.OCTOBER, 15).getTimeInMillis(), 1), "villany��ra, g��zsz��mla");
+		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.NOVEMBER, 4).getTimeInMillis(), 1), "g��z��ra, villanysz��mla");
+		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.NOVEMBER, 1).getTimeInMillis(), 1), "flipsz��mla");
+		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.NOVEMBER, 7).getTimeInMillis(), 3), "szem��td��j, biztos��t��s");
 		System.out.println(
 			tm
 //			String.format("%ty-%1$tm-%1$td %1$tH:%1$tM:%1$tS", nextms)+"\t"
@@ -291,9 +291,9 @@ class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 			StringBuilder header= new StringBuilder();
 			StringBuilder body= new StringBuilder();
 			header.setLength(0);
-			header.append("train_id\t"); body.append(train_id+"\t");
-			header.append("no\t"); body.append(train_no+"\t");
-			header.append("rail_id\t"); body.append(rail_id+"\t");
+			header.append("tid\t"); body.append(train_id+"\t");
+			header.append("tno\t"); body.append(train_no+"\t");
+			header.append("rid\t"); body.append(rail_id+"\t");
 //			header.append("v_in\t"); body.append(v_in+"\t");
 //			header.append("v_max\t"); body.append(v_max+"\t");
 			header.setCharAt(header.length()-1, '\r'); body.setCharAt(body.length()-1, '\r');
@@ -307,6 +307,9 @@ class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 	public boolean isFirst(int train_id, int no) {
 		return get(train_id).lowerKey(no)==null;
 	}
+	public boolean isPrevLast(int train_id, int no) {
+		return !isLast(train_id, no) && get(train_id).higherKey(no+1)==null;
+	}
 	public boolean isLast(int train_id, int no) {
 		return get(train_id).higherKey(no)==null;
 	}
@@ -319,10 +322,18 @@ class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 	public boolean isOriginalDirection(int train_id, int no) {
 		return ((get(train_id).entrySet().stream().filter(e -> e.getValue().train_no<=no && isAfterReversion(train_id, e.getValue().train_no)).count() & 1)==0) ? true : false;
 	}
+	public boolean isLastTerminal(int train_id) {
+		return rail.getType(get(train_id).lastEntry().getValue().rail_id).equals(Rail.Type.T);
+	}
+	public boolean isLastTarget(int train_id) {
+		return get(train_id).lastEntry().getValue().rail_id==train.getTargetItemId(train_id);
+	}
 	public int getStopLevelOnItem(int train_id, int no) {  
 		TreeMap<Integer, Route.Record> route= get(train_id);
 		int train_target_item_id= train.getTargetItemId(train_id);
-		if (no==route.size()-2 && route.get(no+1).rail_id!=train_target_item_id && rail.getType(route.get(no+1).rail_id).equals(Rail.Type.T) || no==route.size()-1 &&	route.get(no).rail_id!=train_target_item_id && !rail.getType(route.get(no).rail_id).equals(Rail.Type.T)) {
+		//utolsón vagyunk, és az utolsó nem terminal
+		//utolsó előttin vagyunk, az utolsó terminal és nem target 
+		if (isLast(train_id, no) && !isLastTerminal(train_id) || isPrevLast(train_id, no) && isLastTerminal(train_id) && !isLastTarget(train_id)) {
 			return 4;
 		} else if (isBeforeReversion(train_id, no)) {
 			return 3;
@@ -414,13 +425,18 @@ class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 			e_0.getValue().entrySet().forEach(e_1 -> {
 				header.setLength(0);
 				header.append(e_1.getValue().toString().split("\r")[0]+"\t"); body.append(e_1.getValue().toString().split("\r")[1]+"\t");
-				header.append("before_reversion\t"); body.append(isBeforeReversion(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
-				header.append("after_reversion\t"); body.append(isAfterReversion(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
-				header.append("original_direction\t"); body.append(isOriginalDirection(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
-				header.append("stop_level_on_item\t"); body.append(getStopLevelOnItem(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
-				header.append("p_start\t"); body.append(getPStart(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
-				header.append("p_end\t"); body.append(getPEnd(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
-				header.append("item_v_max\t"); body.append(getItemVMax(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("frst\t"); body.append(isFirst(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("plst\t"); body.append(isPrevLast(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("last\t"); body.append(isLast(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("bfrv\t"); body.append(isBeforeReversion(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("afrv\t"); body.append(isAfterReversion(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("ord\t"); body.append(isOriginalDirection(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("ltm\t"); body.append(isLastTerminal(e_1.getValue().train_id)+"\t");
+				header.append("ltr\t"); body.append(isLastTarget(e_1.getValue().train_id)+"\t");
+				header.append("sli\t"); body.append(getStopLevelOnItem(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("pst\t"); body.append(getPStart(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("pen\t"); body.append(getPEnd(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("ivm\t"); body.append(getItemVMax(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
 				header.setCharAt(header.length()-1, '\r'); body.setCharAt(body.length()-1, '\r');
 			});
 		});
