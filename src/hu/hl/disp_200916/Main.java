@@ -4,6 +4,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
@@ -137,6 +140,7 @@ public class Main {
 		route.put(2, 19, 25);
 		route.put(2, 20, 26);
 		route.put(2, 21, 31);
+		rail.setUser(24, 56);
 		System.out.print("Rail:\r"+rail);
 		System.out.print("Train:\r"+train);
 		System.out.print("Route:\r"+route);
@@ -200,7 +204,7 @@ class Rail extends TreeMap<Integer, Rail.Record> {
 		Double result= (index==0) ? item.v_max_0 : item.v_max_1;
 		return (result==null) ?  Double.POSITIVE_INFINITY : result;
 	}
-	public int getUser(int id) {
+	public Integer getUser(int id) {
 		return get(id).user; 
 	}
 	public void setUser(int id, int user) {
@@ -304,50 +308,74 @@ class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 		this.rail= rail;
 		this.train= train;
 	}
-	public boolean isFirst(int train_id, int no) {
+	private boolean isFirst(int train_id, int no) {
 		return get(train_id).lowerKey(no)==null;
 	}
-	public boolean isPrevLast(int train_id, int no) {
+	private boolean isPrevLast(int train_id, int no) {
 		return !isLast(train_id, no) && get(train_id).higherKey(no+1)==null;
 	}
-	public boolean isLast(int train_id, int no) {
+	private boolean isLast(int train_id, int no) {
 		return get(train_id).higherKey(no)==null;
 	}
-	public boolean isBeforeReversion(int train_id, int no) {
+	private boolean isBeforeReversion(int train_id, int no) {
 		return get(train_id).get(no+1)!=null && get(train_id).get(no).rail_id==get(train_id).get(no+1).rail_id;
 	}
-	public boolean isAfterReversion(int train_id, int no) {
+	private boolean isAfterReversion(int train_id, int no) {
 		return get(train_id).get(no-1)!=null && get(train_id).get(no).rail_id==get(train_id).get(no-1).rail_id;
 	}
-	public boolean isOriginalDirection(int train_id, int no) {
+	private boolean isOriginalDirection(int train_id, int no) {
 		return ((get(train_id).entrySet().stream().filter(e -> e.getValue().train_no<=no && isAfterReversion(train_id, e.getValue().train_no)).count() & 1)==0) ? true : false;
 	}
-	public boolean isLastTerminal(int train_id) {
+	private boolean isLastTerminal(int train_id) {
 		return rail.getType(get(train_id).lastEntry().getValue().rail_id).equals(Rail.Type.T);
 	}
-	public boolean isLastTarget(int train_id) {
+	private boolean isLastTarget(int train_id) {
 		return get(train_id).lastEntry().getValue().rail_id==train.getTargetItemId(train_id);
 	}
-	public int getStopLevelOnItem(int train_id, int no) {  
-		TreeMap<Integer, Route.Record> route= get(train_id);
-		int train_target_item_id= train.getTargetItemId(train_id);
-		//utolsón vagyunk, és az utolsó nem terminal
-		//utolsó előttin vagyunk, az utolsó terminal és nem target 
-		if (isLast(train_id, no) && !isLastTerminal(train_id) || isPrevLast(train_id, no) && isLastTerminal(train_id) && !isLastTarget(train_id)) {
-			return 4;
-		} else if (isBeforeReversion(train_id, no)) {
-			return 3;
+	private Integer getNearestTrackNo(int train_id, int no) { //no+1-től a legközelebbi track indexe
+		Optional<java.util.Map.Entry<Integer, Record>> o_nearest_track_rail_no= get(train_id).tailMap(no, false).entrySet().stream().filter(e -> rail.getType(e.getValue().rail_id).equals(Rail.Type.R)).findFirst();
+		if (o_nearest_track_rail_no.isPresent()) { //van-e no+1-en vagy utána track
+			return o_nearest_track_rail_no.get().getKey();
 		} else {
-			return 0;
+			return null; 
 		}
 	}
-	public double getPStart(int train_id, int no) {
+	private Integer getUser(int train_id, int no) { //no+1-től a legközelebbi trackig levő itemek júzerének kikeresése
+		Integer nearest_track_no= getNearestTrackNo(train_id, no);
+		if (nearest_track_no!=null) {
+			Optional<java.util.Map.Entry<Integer, Record>> o_user= get(train_id).subMap(no, false, nearest_track_no, true).entrySet().stream().filter(e -> rail.getUser(e.getValue().rail_id)!=null).findFirst();
+			if (o_user.isPresent()) { //van-e no+1-en vagy utána item nem null júzerrel 
+				return rail.getUser(o_user.get().getValue().rail_id);
+			} else {
+				return null;
+			}
+		} else {
+			return null;
+		}
+	}
+	private int getStopLevelOnItem(int train_id, int no) {  
+		TreeMap<Integer, Route.Record> route= get(train_id);
+		//az utolsó előttin vagyunk, az utolsó terminal és nem target 
+		//az utolsón vagyunk, és az utolsó nem terminal  
+		if (isPrevLast(train_id, no) && isLastTerminal(train_id) && !isLastTarget(train_id) || isLast(train_id, no) && !isLastTerminal(train_id)) {
+			return 4; //a megadott itemről továbbhaladás csak útvonalmódosítás után lehtséges
+		} else if (isBeforeReversion(train_id, no)) {
+			return 3; //a megadott itemről továbbhaladás lefékezés és megfordulás után
+		} else if (getUser(train_id, no)==null) {
+			return 1; //a megadott itemről továbbhaladás csak az útvonal további részének foglalása után lehetséges (senki se használja)
+		} else if (getUser(train_id, no)==train_id) {
+			return 0; //a megadott itemről továbbhaladáshoz minden feltétel adott (nekem van lefoglalva)
+		} else {
+			return 2; //a megadott itemről továbbhaladás csak az útvonal további részének felszabadulása után lehetséges (valaki más használja)
+		}
+	}
+	private double getPStart(int train_id, int no) {
 		return (isAfterReversion(train_id, no)) ? 10+train.getL(train_id) : 0;
 	}
-	public double getPEnd(int train_id, int no) {
+	private double getPEnd(int train_id, int no) {
 		return rail.getL(get(train_id).get(no).rail_id)-((getStopLevelOnItem(train_id, no)==0) ? 0 : 10);
 	}
-	public double getItemVMax(int train_id, int no) {
+	private double getItemVMax(int train_id, int no) {
 		Rail.Type type= rail.getType(get(train_id).get(no).rail_id);
 		switch (type) {
 		case T:
@@ -425,14 +453,14 @@ class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 			e_0.getValue().entrySet().forEach(e_1 -> {
 				header.setLength(0);
 				header.append(e_1.getValue().toString().split("\r")[0]+"\t"); body.append(e_1.getValue().toString().split("\r")[1]+"\t");
-				header.append("frst\t"); body.append(isFirst(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
-				header.append("plst\t"); body.append(isPrevLast(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
-				header.append("last\t"); body.append(isLast(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
-				header.append("bfrv\t"); body.append(isBeforeReversion(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
-				header.append("afrv\t"); body.append(isAfterReversion(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("frs\t"); body.append(isFirst(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("pls\t"); body.append(isPrevLast(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("lst\t"); body.append(isLast(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("bfr\t"); body.append(isBeforeReversion(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
+				header.append("afr\t"); body.append(isAfterReversion(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
 				header.append("ord\t"); body.append(isOriginalDirection(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
 				header.append("ltm\t"); body.append(isLastTerminal(e_1.getValue().train_id)+"\t");
-				header.append("ltr\t"); body.append(isLastTarget(e_1.getValue().train_id)+"\t");
+				header.append("ltg\t"); body.append(isLastTarget(e_1.getValue().train_id)+"\t");
 				header.append("sli\t"); body.append(getStopLevelOnItem(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
 				header.append("pst\t"); body.append(getPStart(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
 				header.append("pen\t"); body.append(getPEnd(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
