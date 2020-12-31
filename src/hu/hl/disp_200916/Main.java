@@ -140,7 +140,7 @@ public class Main {
 		route.put(2, 19, 25);
 		route.put(2, 20, 26);
 		route.put(2, 21, 31);
-		rail.setUser(24, 56);
+		rail.setUser(8, 56);
 		System.out.print("Rail:\r"+rail);
 		System.out.print("Train:\r"+train);
 		System.out.print("Route:\r"+route);
@@ -205,7 +205,22 @@ class Rail extends TreeMap<Integer, Rail.Record> { //Track nem lehet rövidebb 1
 		return (result==null) ?  Double.POSITIVE_INFINITY : result;
 	}
 	public Integer getUser(int id) {
-		return get(id).user; 
+		Record item= get(id);		
+		Integer result= item.user;
+		switch (getType(id)) {
+		case J:
+			result= (result==null) ? get(item.next_a_item_id).user : result;
+			result= (item.next_b_item_id!=null && result==null) ? get(item.next_b_item_id).user : result;
+			result= (item.next_c_item_id!=null && result==null) ? get(item.next_c_item_id).user : result;
+			result= (item.next_d_item_id!=null && result==null) ? get(item.next_d_item_id).user : result;
+			return result;
+		case L:			
+			result= (item.next_c_item_id!=null && result==null) ? get(item.next_c_item_id).user : result;
+			return result;
+		case T:
+		default:
+			return null;
+		}
 	}
 	public void setUser(int id, int user) {
 		get(id).user= user; 
@@ -334,11 +349,7 @@ class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 	}
 	private Integer getNearestTrackNo(int train_id, int no) { //no-tól a legközelebbi track indexe (min. no+1)
 		Optional<java.util.Map.Entry<Integer, Record>> o_nearest_track_rail_no= get(train_id).tailMap(no, false).entrySet().stream().filter(e -> rail.getType(e.getValue().rail_id).equals(Rail.Type.R)).findFirst();
-		if (o_nearest_track_rail_no.isPresent()) { //van-e no+1-en vagy utána track
-			return o_nearest_track_rail_no.get().getKey();
-		} else {
-			return null; 
-		}
+		return (o_nearest_track_rail_no.isPresent()) ? o_nearest_track_rail_no.get().getKey() : null; //ha nincs no+1-en vagy utána track, akkor null
 	}
 	private Integer getUser(int train_id, int no) { //no+1-től a legközelebbi trackig levő itemek júzerének kikeresése
 		Integer nearest_track_no= getNearestTrackNo(train_id, no);
@@ -461,6 +472,7 @@ class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 				header.append("ord\t"); body.append(isOriginalDirection(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
 				header.append("ltm\t"); body.append(isLastTerminal(e_1.getValue().train_id)+"\t");
 				header.append("ltg\t"); body.append(isLastTarget(e_1.getValue().train_id)+"\t");
+				header.append("ntr\t"); body.append(getNearestTrackNo(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
 				header.append("sli\t"); body.append(getStopLevelOnItem(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
 				header.append("pst\t"); body.append(getPStart(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
 				header.append("pen\t"); body.append(getPEnd(e_1.getValue().train_id, e_1.getValue().train_no)+"\t");
