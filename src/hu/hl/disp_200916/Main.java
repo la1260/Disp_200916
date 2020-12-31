@@ -147,7 +147,7 @@ public class Main {
    	}
 }
 
-class Rail extends TreeMap<Integer, Rail.Record> {
+class Rail extends TreeMap<Integer, Rail.Record> { //Track nem lehet rövidebb 10m-nél.
 	private static final long serialVersionUID = 1L;
 	public enum Type{T, R, L, J};	
 	public class Record {
@@ -332,7 +332,7 @@ class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 	private boolean isLastTarget(int train_id) {
 		return get(train_id).lastEntry().getValue().rail_id==train.getTargetItemId(train_id);
 	}
-	private Integer getNearestTrackNo(int train_id, int no) { //no+1-től a legközelebbi track indexe
+	private Integer getNearestTrackNo(int train_id, int no) { //no-tól a legközelebbi track indexe (min. no+1)
 		Optional<java.util.Map.Entry<Integer, Record>> o_nearest_track_rail_no= get(train_id).tailMap(no, false).entrySet().stream().filter(e -> rail.getType(e.getValue().rail_id).equals(Rail.Type.R)).findFirst();
 		if (o_nearest_track_rail_no.isPresent()) { //van-e no+1-en vagy utána track
 			return o_nearest_track_rail_no.get().getKey();
@@ -373,7 +373,7 @@ class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 		return (isAfterReversion(train_id, no)) ? 10+train.getL(train_id) : 0;
 	}
 	private double getPEnd(int train_id, int no) {
-		return rail.getL(get(train_id).get(no).rail_id)-((getStopLevelOnItem(train_id, no)==0) ? 0 : 10);
+		return Math.max(rail.getL(get(train_id).get(no).rail_id)-((getStopLevelOnItem(train_id, no)==0) ? 0 : 10), 0);
 	}
 	private double getItemVMax(int train_id, int no) {
 		Rail.Type type= rail.getType(get(train_id).get(no).rail_id);
