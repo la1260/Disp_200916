@@ -140,7 +140,7 @@ public class Main {
 		route.put(2, 19, 25);
 		route.put(2, 20, 26);
 		route.put(2, 21, 31);
-		rail.setUser(8, 56);
+		rail.setUser(10, 56);
 		System.out.print("Rail:\r"+rail);
 		System.out.print("Train:\r"+train);
 		System.out.print("Route:\r"+route);
@@ -210,16 +210,12 @@ class Rail extends TreeMap<Integer, Rail.Record> { //Track nem lehet rövidebb 1
 		switch (getType(id)) {
 		case J:
 			result= (result==null) ? get(item.next_a_item_id).user : result;
-			result= (item.next_b_item_id!=null && result==null) ? get(item.next_b_item_id).user : result;
-			result= (item.next_c_item_id!=null && result==null) ? get(item.next_c_item_id).user : result;
-			result= (item.next_d_item_id!=null && result==null) ? get(item.next_d_item_id).user : result;
-			return result;
+			result= (result==null && item.next_b_item_id!=null) ? get(item.next_b_item_id).user : result;
+			result= (result==null && item.next_d_item_id!=null) ? get(item.next_d_item_id).user : result;
 		case L:			
-			result= (item.next_c_item_id!=null && result==null) ? get(item.next_c_item_id).user : result;
-			return result;
-		case T:
+			result= (result==null && item.next_c_item_id!=null) ? get(item.next_c_item_id).user : result;
 		default:
-			return null;
+			return result;
 		}
 	}
 	public void setUser(int id, int user) {
