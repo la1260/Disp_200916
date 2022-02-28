@@ -214,15 +214,15 @@ public class Main implements DispCore {
 		double t= 0;
 		while (Math.rint(t*10)<4000) {
 			t= Math.rint(section.step(t, 0.1)*10)/10;
-			try {
+/*			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-			}
+			}*/
 		}
 		
 		
-//		System.out.println("t:"+t[0]+"\nRoute:\n"+route);
+//		System.out.println("\nRoute:\n"+route);
 		System.out.println("\rSection:\r"+section);
 	}
 	public void update(int id) {
@@ -234,15 +234,15 @@ public class Main implements DispCore {
 				private static final long serialVersionUID = 1L;
 				public void paint(Graphics g) {
 					super.paint(g);
-					int train_id= rail.get(id).getUser();
-					int color= rail.get(id).getColor();
+//					int train_id= rail.get(id).getUser();
+//					int color= rail.get(id).getColor();
 					g.setColor(Color.BLACK);
-					g.drawString(String.valueOf(train_id), getWidth()>>1, 12);
-					System.out.println("e: "+id+": "+train_id);
+//					g.drawString(String.valueOf(train_id), getWidth()>>1, 12);
+//					System.out.println("e: "+id+": "+train_id);
 				}
 			});
 			frame.getLayeredPane().add(p);
-			p.setBounds(rail.get(id).getX()*8, rail.get(id).getY()*16, (rail.get(id).getWidth()+1)*8, (rail.get(id).getHeight()+1)*16);
+//			p.setBounds(rail.get(id).getX()*8, rail.get(id).getY()*16, (rail.get(id).getWidth()+1)*8, (rail.get(id).getHeight()+1)*16);
 			p.setVisible(true);
 		}
 	}
