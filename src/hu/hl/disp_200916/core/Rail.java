@@ -1,5 +1,6 @@
 package hu.hl.disp_200916.core;
 
+import java.util.ArrayList;
 import java.util.TreeMap;
 
 public class Rail extends TreeMap<Integer, Record> { //Track nem lehet rövidebb 10m-nél.
@@ -31,28 +32,27 @@ public class Rail extends TreeMap<Integer, Record> { //Track nem lehet rövidebb
 	public int getHeight(int id) {
 		return get(id).height;
 	}
-	public double getVMax(int id, int index) {
-		if (getType(id).equals(Type.T)) id= get(id).next_a_item_id;
-		Record item= get(id);
-		Double result= (index==0) ? item.v_max_0 : item.v_max_1;
+	public int getJunctionDir(int id, int prev_id, int next_id) {
+		return ((get(id).next.indexOf(prev_id) | get(id).next.indexOf(next_id)) & 2)>>1;  
+	}
+	public double getVMax(int id, int junctiondir) {
+		Record record= get((getType(id).equals(Type.T)) ? get(id).next.get(0) : id);
+		Double result= record.v_max.get(junctiondir);
 		return (result==-1) ?  Double.POSITIVE_INFINITY : result;
 	}
-	public int getJunctionDir(int id, int prev_id, int next_id) {
-		return (get(id).next_a_item_id==prev_id && get(id).next_b_item_id==next_id || get(id).next_a_item_id==next_id && get(id).next_b_item_id==prev_id) ? 0 : 1;  
-	}
 	public int getUser(int id) {
-		Record item= get(id);		
-		Integer result= item.user;
+		Record record= get(id);		
+		Integer result= record.user;
 		switch (getType(id)) {
 		case J:
-			result= (result==-1) ? get(item.next_a_item_id).user : result;
-			result= (result==-1 && item.next_b_item_id!=-1) ? get(item.next_b_item_id).user : result;
-			result= (result==-1 && item.next_d_item_id!=-1) ? get(item.next_d_item_id).user : result;
+			result= (result==-1 && containsKey(record.next.get(0))) ? get(record.next.get(0)).user : result;
+			result= (result==-1 && containsKey(record.next.get(1))) ? get(record.next.get(1)).user : result;
+			result= (result==-1 && containsKey(record.next.get(3))) ? get(record.next.get(3)).user : result;
 		case L:			
-			result= (result==-1 && item.next_c_item_id!=-1) ? get(item.next_c_item_id).user : result;
+			result= (result==-1 && containsKey(record.next.get(2))) ? get(record.next.get(2)).user : result;
 		default:
 			return result;
-		}
+		}		
 	}
 	public void setUser(int id, int user) {
 		if (get(id).type.equals(Type.L) || get(id).type.equals(Type.R)) {
@@ -81,12 +81,8 @@ class Record {
 	public final int id;
 	public final Rail.Type type;
 	public final double l;
-	public final int next_a_item_id;
-	public final int next_b_item_id;
-	public final int next_c_item_id;
-	public final int next_d_item_id;
-	public final double v_max_0;
-	public final double v_max_1;
+	public final ArrayList<Integer> next= new ArrayList<Integer>();
+	public final ArrayList<Double> v_max= new ArrayList<Double>();
 	public int user= -1;
 	public int color;
 	public final int x;
@@ -97,12 +93,12 @@ class Record {
 		this.id= id;
 		this.type= type;
 		this.l= l;
-		this.next_a_item_id= next_a_item_id;
-		this.next_b_item_id= next_b_item_id;
-		this.next_c_item_id= next_c_item_id;
-		this.next_d_item_id= next_d_item_id;
-		this.v_max_0= v_max_0;
-		this.v_max_1= v_max_1;
+		this.next.add(next_a_item_id);
+		this.next.add(next_b_item_id);
+		this.next.add(next_c_item_id);
+		this.next.add(next_d_item_id);
+		this.v_max.add(v_max_0);
+		this.v_max.add(v_max_1);
 		this.x= x;
 		this.y= y;
 		this.width= width;
@@ -115,12 +111,12 @@ class Record {
 		header.append("id\t"); body.append(id+"\t");
 		header.append("type\t"); body.append(type+"\t");
 		header.append("l\t"); body.append(l+"\t");
-		header.append("next_a_item_id\t"); body.append(next_a_item_id+"\t");
-		header.append("next_b_item_id\t"); body.append(next_b_item_id+"\t");
-		header.append("next_c_item_id\t"); body.append(next_c_item_id+"\t");
-		header.append("next_d_item_id\t"); body.append(next_d_item_id+"\t");
-		header.append("v_max_0\t"); body.append(v_max_0+"\t");
-		header.append("v_max_1\t"); body.append(v_max_1+"\t");
+		header.append("next_a_item_id\t"); body.append(next.get(0)+"\t");
+		header.append("next_b_item_id\t"); body.append(next.get(1)+"\t");
+		header.append("next_c_item_id\t"); body.append(next.get(2)+"\t");
+		header.append("next_d_item_id\t"); body.append(next.get(3)+"\t");
+		header.append("v_max_0\t"); body.append(v_max.get(0)+"\t");
+		header.append("v_max_1\t"); body.append(v_max.get(1)+"\t");
 		header.append("user\t"); body.append(user+"\t");
 		header.setCharAt(header.length()-1, '\r'); body.setCharAt(body.length()-1, '\r');
 		return header.toString()+body.toString();
