@@ -7,8 +7,8 @@ import java.util.Map.Entry;
 
 public class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 	private static final long serialVersionUID= 1L;
-	public final Rail rail;
-	private final Train train;
+	public final Rails rail;
+	private final Trains train;
 	public class Record {
 		public final int train_id;
 		public final int route_rec_id;
@@ -32,7 +32,7 @@ public class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 			return header.toString()+body.toString();
 		}	
 	}
-	public Route(Rail rail, Train train) {
+	public Route(Rails rail, Trains train) {
 		this.rail= rail;
 		this.train= train;
 	}
@@ -51,7 +51,7 @@ public class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 	 * @return
 	 */
 	public int getNearestTrackNo(int train_id, int no) {
-		Optional<java.util.Map.Entry<Integer, Record>> o_nearest_track_rail_no= get(train_id).tailMap(no, false).entrySet().stream().filter(e -> rail.getType(e.getValue().rail_id).equals(Rail.Type.R) && !isBeforeReversion(train_id, e.getKey())).findFirst();
+		Optional<java.util.Map.Entry<Integer, Record>> o_nearest_track_rail_no= get(train_id).tailMap(no, false).entrySet().stream().filter(e -> rail.getType(e.getValue().rail_id).equals(Rails.Type.R) && !isBeforeReversion(train_id, e.getKey())).findFirst();
 		return (o_nearest_track_rail_no.isPresent()) ? o_nearest_track_rail_no.get().getKey() : -1;
 	}	
 	/** 
@@ -112,10 +112,10 @@ public class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 		return (isAfterReversion(train_id, no)) ? 10+train.getL(train_id) : 0;
 	}
 	public double getPEnd(int train_id, int no) {
-		return Math.max(rail.getL(get(train_id).get(no).rail_id)-((isBeforeReversion(train_id, no) || !isUserTrainId(train_id, no)) ? 10 : 0), 0);
+		return Math.max(rail.getL(get(train_id).get(no).rail_id)-(((isBeforeReversion(train_id, no) || !isUserTrainId(train_id, no)) && !isKihaladas(train_id, no)) ? 10 : 0), 0);
 	}
 	public double getItemVMax(int train_id, int no) {
-		Rail.Type type= rail.getType(get(train_id).get(no).rail_id);
+		Rails.Type type= rail.getType(get(train_id).get(no).rail_id);
 		switch (type) {
 		case T:
 		case R:
@@ -123,16 +123,16 @@ public class Route extends TreeMap<Integer, TreeMap<Integer, Route.Record>> {
 		default:
 			int d= 1;
 			double result= rail.getVMax(get(train_id).get(no).rail_id, 0);
-			boolean bl= !rail.getType(get(train_id).get(no-1).rail_id).equals(Rail.Type.R);
-			boolean bf= !rail.getType(get(train_id).get(no+1).rail_id).equals(Rail.Type.R);
+			boolean bl= !rail.getType(get(train_id).get(no-1).rail_id).equals(Rails.Type.R);
+			boolean bf= !rail.getType(get(train_id).get(no+1).rail_id).equals(Rails.Type.R);
 			while (bl || bf) {
 				if (bl) {
 					result= Math.min(result, rail.getVMax(get(train_id).get(no-d).rail_id, rail.getJunctionDir(get(train_id).get(no-d).rail_id, get(train_id).get(no-d-1).rail_id, get(train_id).get(no-d+1).rail_id))); 
-					bl= !rail.getType(get(train_id).get(no-d-1).rail_id).equals(Rail.Type.R);
+					bl= !rail.getType(get(train_id).get(no-d-1).rail_id).equals(Rails.Type.R);
 				}
 				if (bf) {
 					result= Math.min(result, rail.getVMax(get(train_id).get(no+d).rail_id, rail.getJunctionDir(get(train_id).get(no+d).rail_id, get(train_id).get(no+d-1).rail_id, get(train_id).get(no+d+1).rail_id)));
-					bf= !rail.getType(get(train_id).get(no+d+1).rail_id).equals(Rail.Type.R);
+					bf= !rail.getType(get(train_id).get(no+d+1).rail_id).equals(Rails.Type.R);
 				}
 				d++;
 			}

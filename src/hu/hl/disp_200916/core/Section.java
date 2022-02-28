@@ -7,7 +7,7 @@ public class Section extends TreeMap<Section.Index, TreeMap<Integer, TreeMap<Dou
 	private static final long serialVersionUID= 1L;
 	/** Globális idő, vagy globális pozició alapján törtnéjen a lekérdezés */
 	public enum Index {P, T}
-	private final Train train;
+	private final Trains train;
 	private final Route route;
 	private final DispCore dispcorelistener;
 	public class Record {
@@ -43,7 +43,7 @@ public class Section extends TreeMap<Section.Index, TreeMap<Integer, TreeMap<Dou
 			return header.toString()+body.toString();
 		}
 	}
-	public Section(DispCore dispcorelistener, Train train, Route route) {
+	public Section(DispCore dispcorelistener, Trains train, Route route) {
 		this.dispcorelistener= dispcorelistener;
 		this.train= train;
 		this.route= route;
