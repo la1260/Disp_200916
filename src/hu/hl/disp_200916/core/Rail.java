@@ -19,14 +19,26 @@ public class Rail extends TreeMap<Integer, Record> { //Track nem lehet rövidebb
 	public double getL(int id) {
 		return get(id).l;
 	}
-	public int getJunctionDir(int id, int prev_id, int next_id) {
-		return (get(id).next_a_item_id==prev_id && get(id).next_b_item_id==next_id || get(id).next_a_item_id==next_id && get(id).next_b_item_id==prev_id) ? 0 : 1;  
+	public int getX(int id) {
+		return get(id).x;
+	}
+	public int getY(int id) {
+		return get(id).y;
+	}
+	public int getWidth(int id) {
+		return get(id).width;
+	}
+	public int getHeight(int id) {
+		return get(id).height;
 	}
 	public double getVMax(int id, int index) {
 		if (getType(id).equals(Type.T)) id= get(id).next_a_item_id;
 		Record item= get(id);
 		Double result= (index==0) ? item.v_max_0 : item.v_max_1;
 		return (result==null) ?  Double.POSITIVE_INFINITY : result;
+	}
+	public int getJunctionDir(int id, int prev_id, int next_id) {
+		return (get(id).next_a_item_id==prev_id && get(id).next_b_item_id==next_id || get(id).next_a_item_id==next_id && get(id).next_b_item_id==prev_id) ? 0 : 1;  
 	}
 	public int getUser(int id) {
 		Record item= get(id);		
@@ -44,9 +56,15 @@ public class Rail extends TreeMap<Integer, Record> { //Track nem lehet rövidebb
 	}
 	public void setUser(int id, int user) {
 		if (get(id).type.equals(Type.L) || get(id).type.equals(Type.R)) {
-			get(id).setUser(user);
+			get(id).user= user;
 		}
 		dispcorelistener.update(id);
+	}
+	public int getColor(int id) {
+		return get(id).color;
+	}
+	public void setColor(int id, int color) {
+		get(id).color= color;
 	}
 	public String toString() {
 		StringBuilder header= new StringBuilder();
@@ -89,27 +107,6 @@ class Record {
 		this.y= y;
 		this.width= width;
 		this.height= height;
-	}
-	public int getColor() {
-		return color;
-	}
-	public int getUser() {
-		return user;
-	}
-	public void setUser(int user) {
-		this.user= user;
-	}
-	public int getX() {
-		return x;
-	}
-	public int getY() {
-		return y;
-	}
-	public int getWidth() {
-		return width;
-	}
-	public int getHeight() {
-		return height;
 	}
 	public String toString() {
 		StringBuilder header= new StringBuilder();
