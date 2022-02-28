@@ -9,7 +9,7 @@ public class Rail extends TreeMap<Integer, Record> { //Track nem lehet rövidebb
 	public Rail(DispCore dispcorelistener) {
 		this.dispcorelistener= dispcorelistener;
 	}
-	public void put(int id, Type type, double l, int next_a_item_id, int next_b_item_id, int next_c_item_id, int next_d_item_id, Double v_max_0, Double v_max_1, int x, int y, int width, int height) {
+	public void put(int id, Type type, double l, int next_a_item_id, int next_b_item_id, int next_c_item_id, int next_d_item_id, double v_max_0, double v_max_1, int x, int y, int width, int height) {
 		super.put(id, new Record(id, type, l, next_a_item_id, next_b_item_id, next_c_item_id, next_d_item_id, v_max_0, v_max_1, x, y, width, height));
 		dispcorelistener.update(id);
 	}
@@ -35,7 +35,7 @@ public class Rail extends TreeMap<Integer, Record> { //Track nem lehet rövidebb
 		if (getType(id).equals(Type.T)) id= get(id).next_a_item_id;
 		Record item= get(id);
 		Double result= (index==0) ? item.v_max_0 : item.v_max_1;
-		return (result==null) ?  Double.POSITIVE_INFINITY : result;
+		return (result==-1) ?  Double.POSITIVE_INFINITY : result;
 	}
 	public int getJunctionDir(int id, int prev_id, int next_id) {
 		return (get(id).next_a_item_id==prev_id && get(id).next_b_item_id==next_id || get(id).next_a_item_id==next_id && get(id).next_b_item_id==prev_id) ? 0 : 1;  
@@ -85,15 +85,15 @@ class Record {
 	public final int next_b_item_id;
 	public final int next_c_item_id;
 	public final int next_d_item_id;
-	public final Double v_max_0;
-	public final Double v_max_1;
+	public final double v_max_0;
+	public final double v_max_1;
 	public int user= -1;
 	public int color;
 	public final int x;
 	public final int y;
 	public final int width;
 	public final int height;		
-	public Record(int id, Rail.Type type, double l, int next_a_item_id, int next_b_item_id, int next_c_item_id, int next_d_item_id, Double v_max_0, Double v_max_1, int x, int y, int width, int height) {
+	public Record(int id, Rail.Type type, double l, int next_a_item_id, int next_b_item_id, int next_c_item_id, int next_d_item_id, double v_max_0, double v_max_1, int x, int y, int width, int height) {
 		this.id= id;
 		this.type= type;
 		this.l= l;
