@@ -9,7 +9,7 @@ public class Rail extends TreeMap<Integer, Record> { //Track nem lehet rövidebb
 	public Rail(DispCore dispcorelistener) {
 		this.dispcorelistener= dispcorelistener;
 	}
-	public void put(int id, Type type, double l, int next_a_item_id, Integer next_b_item_id, Integer next_c_item_id, Integer next_d_item_id, Double v_max_0, Double v_max_1, int x, int y, int width, int height) {
+	public void put(int id, Type type, double l, int next_a_item_id, int next_b_item_id, int next_c_item_id, int next_d_item_id, Double v_max_0, Double v_max_1, int x, int y, int width, int height) {
 		super.put(id, new Record(id, type, l, next_a_item_id, next_b_item_id, next_c_item_id, next_d_item_id, v_max_0, v_max_1, x, y, width, height));
 		dispcorelistener.update(id);
 	}
@@ -46,10 +46,10 @@ public class Rail extends TreeMap<Integer, Record> { //Track nem lehet rövidebb
 		switch (getType(id)) {
 		case J:
 			result= (result==-1) ? get(item.next_a_item_id).user : result;
-			result= (result==-1 && item.next_b_item_id!=null) ? get(item.next_b_item_id).user : result;
-			result= (result==-1 && item.next_d_item_id!=null) ? get(item.next_d_item_id).user : result;
+			result= (result==-1 && item.next_b_item_id!=-1) ? get(item.next_b_item_id).user : result;
+			result= (result==-1 && item.next_d_item_id!=-1) ? get(item.next_d_item_id).user : result;
 		case L:			
-			result= (result==-1 && item.next_c_item_id!=null) ? get(item.next_c_item_id).user : result;
+			result= (result==-1 && item.next_c_item_id!=-1) ? get(item.next_c_item_id).user : result;
 		default:
 			return result;
 		}
@@ -82,9 +82,9 @@ class Record {
 	public final Rail.Type type;
 	public final double l;
 	public final int next_a_item_id;
-	public final Integer next_b_item_id;
-	public final Integer next_c_item_id;
-	public final Integer next_d_item_id;
+	public final int next_b_item_id;
+	public final int next_c_item_id;
+	public final int next_d_item_id;
 	public final Double v_max_0;
 	public final Double v_max_1;
 	public int user= -1;
@@ -93,7 +93,7 @@ class Record {
 	public final int y;
 	public final int width;
 	public final int height;		
-	public Record(int id, Rail.Type type, double l, int next_a_item_id, Integer next_b_item_id, Integer next_c_item_id, Integer next_d_item_id, Double v_max_0, Double v_max_1, int x, int y, int width, int height) {
+	public Record(int id, Rail.Type type, double l, int next_a_item_id, int next_b_item_id, int next_c_item_id, int next_d_item_id, Double v_max_0, Double v_max_1, int x, int y, int width, int height) {
 		this.id= id;
 		this.type= type;
 		this.l= l;
