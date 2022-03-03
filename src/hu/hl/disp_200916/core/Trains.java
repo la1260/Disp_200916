@@ -4,17 +4,17 @@ import java.util.TreeMap;
 
 public class Trains extends TreeMap<Integer, Train> {
 	private static final long serialVersionUID= 1L;
-	public void put(int id, int target_item_id, double l, double v_max, double a_p, double a_n) {
-		super.put(id, new Train(id, target_item_id, l, v_max, a_p, a_n));
+	public void put(int train_id, int target_rail_id, double l, double v_max, double a_p, double a_n) {
+		super.put(train_id, new Train(train_id, target_rail_id, l, v_max, a_p, a_n));
 	}
-	public int getTargetItemId(int id) {
-		return get(id).target_item_id;
+	public int getTargetItemId(int train_id) {
+		return get(train_id).target_rail_id;
 	}
-	public double getL(int id) {
-		return get(id).l;
+	public double getL(int train_id) {
+		return get(train_id).l;
 	}
-	public double getVMax(int id) {
-		return get(id).v_max;
+	public double getVMax(int train_id) {
+		return get(train_id).v_max;
 	}	
 	public String toString() {
 		StringBuilder header= new StringBuilder();
@@ -29,14 +29,14 @@ public class Trains extends TreeMap<Integer, Train> {
 
 class Train {
 	public final int id;
-	public final int target_item_id;	
+	public final int target_rail_id;	
 	public final double l;
 	public final double v_max;
 	public final double a_p;
 	public final double a_n;
-	public Train(int id, int target_item_id, double l, double v_max, double a_p, double a_n) {
+	public Train(int id, int target_rail_id, double l, double v_max, double a_p, double a_n) {
 		this.id= id;
-		this.target_item_id= target_item_id;
+		this.target_rail_id= target_rail_id;
 		this.l= l;
 		this.v_max= v_max;
 		this.a_p= a_p;
@@ -47,7 +47,7 @@ class Train {
 		StringBuilder body= new StringBuilder();
 		header.setLength(0);
 		header.append("id\t"); body.append(id+"\t");
-		header.append("target_item_id\t"); body.append(target_item_id+"\t");
+		header.append("target_item_id\t"); body.append(target_rail_id+"\t");
 		header.append("l\t"); body.append(l+"\t");
 		header.append("v_max\t"); body.append(v_max+"\t");
 		header.append("a_p\t"); body.append(a_p+"\t");

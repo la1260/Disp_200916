@@ -12,8 +12,8 @@ import javax.swing.JPanel;
 
 import hu.hl.disp_200916.core.DispCore;
 import hu.hl.disp_200916.core.Rails;
-import hu.hl.disp_200916.core.Route;
-import hu.hl.disp_200916.core.Section;
+import hu.hl.disp_200916.core.Routes;
+import hu.hl.disp_200916.core.Sections;
 import hu.hl.disp_200916.core.Trains;
 
 // a kihaladó, utolsó Track-on (Target előtt közvetlenül) ne engedd megfordulni (nem is lenne értelme)
@@ -21,9 +21,8 @@ import hu.hl.disp_200916.core.Trains;
 public class Main implements DispCore {
 	private Rails rail= new Rails(this);
 	private Trains train= new Trains();
-	private Route route= new Route(rail, train);
-	private Section section= new Section(this, train, route);
-	
+	private Routes route= new Routes(rail, train);
+	private Sections section= new Sections(this, train, route);
 	private TreeMap<Integer, JPanel> gitems= new TreeMap<Integer, JPanel>();
 	private JFrame frame= new JFrame();
 	public static long nextms(long currentms, long refms, int periodmonth) { 
@@ -52,14 +51,15 @@ public class Main implements DispCore {
 		); */
 	}
 	public Main() {
-		frame.setLayout(null);
+		
+/*		frame.setLayout(null);
 		frame.setBounds(200, 40, 800, 920);
 		frame.setVisible(true);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setLayeredPane(new JLayeredPane());
 		frame.getLayeredPane().setBackground(Color.YELLOW);
 		frame.getLayeredPane().setOpaque(true);
-		frame.getLayeredPane().setVisible(true);
+		frame.getLayeredPane().setVisible(true);*/
 		
 		rail.put(0, Rails.Type.J, 0, 6, 8, 9, -1, 72/3.6, 36/3.6, 18, 4, 0, 0);
 		rail.put(1, Rails.Type.J, 0, 7, 11, 10, -1, 72/3.6, 36/3.6, 18, 6, 0, 0);
@@ -93,7 +93,7 @@ public class Main implements DispCore {
 		rail.put(29, Rails.Type.T, 0, 22, -1, -1, -1, -1, -1, 46, 4, 0, 0);
 		rail.put(30, Rails.Type.T, 0, 23, -1, -1, -1, -1, -1, 46, 6, 0, 0);
 		rail.put(31, Rails.Type.T, 0, 26, -1, -1, -1, -1, -1, 10, 14, 0, 0);
-		train.put(0, 31, 100, 90/3.6, 2.5, -5);
+		train.put(0, 31, 100, 120/3.6, 2.5, -5);
 		train.put(1, 27, 100, 90/3.6, 2.5, -5);
 		train.put(2, 27, 100, 90/3.6, 2.5, -5);
 		route.put(0, 0, 27);
@@ -116,8 +116,6 @@ public class Main implements DispCore {
 		route.put(0, 17, 26);
 		route.put(0, 18, 25);
 		route.put(0, 19, 25);
-		route.put(0, 20, 26);
-		route.put(0, 21, 31);		
 		route.put(1, 0, 27);
 		route.put(1, 1, 18);
 		route.put(1, 2, 6);
@@ -163,67 +161,23 @@ public class Main implements DispCore {
 		route.put(2, 20, 26);
 		route.put(2, 21, 31);
 
-/*		TextArea ta= new TextArea();
-		ta.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-		frame.add(ta);
-		ta.setVisible(true);*/
-/*		
-		TreeMap<Integer, JLabel> ls= new TreeMap<Integer, JLabel>();
-		rail.entrySet().forEach(e -> {
-			JLabel l= new JLabel();
-			ls.put(e.getKey(), l);
-			frame.add(l);
-			l.setBounds(8, 8+e.getKey()*28, 96, 24);
-			l.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-			l.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-			l.setText("123456");
-			l.setVisible(true);
-		});
-		*/
-		
-/*
-		double[] t= {0};
-		while (Math.rint(t[0]*10)<4000) {
-			train.keySet().forEach(train_id -> {
-				if (section.getA(train_id, t[0]+0.1)<0 || section.getA(train_id, t[0]+0.1)==0 && section.getV(train_id, t[0]+0.1)==0) {
-					int last_index= route.setUser(train_id, section.getRouteRecID(train_id, t[0]+0.1));
-					if (-1<last_index) {
-						section.calc(train_id, t[0], last_index);
-					}
-				}
-			});
-			int[] kihaladt_train_id= {-1};
-			train.keySet().forEach(train_id -> {
-				double pg= section.getP(train_id, t[0], Section.Ref.G)-train.getL(train_id);
-				if (0<pg && section.felszab(train_id, t[0]+0.1, pg, section.getP(train_id, t[0]+0.1, Section.Ref.G)-train.getL(train_id))) { //pg<0 - a vonat vége még be sem jött a pályára, tehát nincs mit felszabadítani.
-					kihaladt_train_id[0]= train_id;
-				}
-			});
-			if (-1<kihaladt_train_id[0]) {
-//				System.out.println("Kihaladt: "+kihaladt_train_id[0]+", Ldő:"+t[0]);
-				train.remove(kihaladt_train_id[0]);
-			}
-			try {
-				Thread.sleep(1);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			t[0]= Math.rint(t[0]*10+1)/10;
-		};
-*/		
+//		System.out.println("\rRoute:\r"+route); //bukik az eltávolított vonatok esetén
 		double t= 0;
-		while (Math.rint(t*10)<4000) {
+		while (Math.rint(t*10)<6000) {
+			if (Math.rint(t*10)==2490) {
+				route.put(0, 20, 26);
+				route.put(0, 21, 31);		
+			}
 			t= Math.rint(section.step(t, 0.1)*10)/10;
+//			System.out.println("t: "+(t-0.1)+"\rSection:\r"+section);
+//			System.out.println("t: "+(t-0.1)+"\nRoute:\n"+route); //bukik az eltávolított vonatok esetén
 			try {
 				Thread.sleep(1);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-			}
+			} 
 		}
-		
-		
-//		System.out.println("\nRoute:\n"+route);
-		System.out.println("\rSection:\r"+section);
+		System.out.println("t: "+Math.rint(t*10)/10+"\rSection:\r"+section);
 	}
 	public void update(int id) {
 		if (gitems.containsKey(id)) {
@@ -238,7 +192,7 @@ public class Main implements DispCore {
 					int color= rail.getColor(id);
 					g.setColor(Color.BLACK);
 					g.drawString(String.valueOf(train_id), getWidth()>>1, 12);
-					System.out.println("e: "+id+": "+train_id);
+//					System.out.println("e: "+id+": "+train_id);
 				}
 			});
 			frame.getLayeredPane().add(p);
@@ -246,7 +200,7 @@ public class Main implements DispCore {
 			p.setVisible(true);
 		}
 	}
-	public void kihaladt(int train_id) {
-		System.out.println("Kihaladt: "+train_id);
+	public void passout(double t, int train_id) {
+		System.out.println("Kihaladt: "+train_id+" t: "+Math.rint(t*10)/10);
 	}
 }
