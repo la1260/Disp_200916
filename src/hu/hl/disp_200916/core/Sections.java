@@ -1,7 +1,6 @@
 package hu.hl.disp_200916.core;
 
 import java.util.TreeMap;
-
 import java.util.Map.Entry;
 
 public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
