@@ -69,7 +69,7 @@ public class Rails extends TreeMap<Integer, Rail> {
 	/**A megadott Rail User-ének beállítása.*/
 	public void setUser(int rail_id, int train_id) {
 		get(rail_id).user= train_id;
-		dispcorelistener.graphicsUpdate(rail_id);
+		dispcorelistener.railUpdate(rail_id);
 	}
 	/**A megadott Rail státuszának (színének) lekérdezése.*/
 	public Status getStatus(int rail_id) {
@@ -78,7 +78,12 @@ public class Rails extends TreeMap<Integer, Rail> {
 	/**A megadott Rail státuszának (színének) beállítása.*/
 	public void setStatus(int rail_id, Status status) {
 		get(rail_id).status= status;
-		dispcorelistener.graphicsUpdate(rail_id);
+		dispcorelistener.railUpdate(rail_id);
+	}
+	/**Kiírandó scöveg. Track esetén ha létező az user, akkor az; ha nem, akkor a vágány név mezője. Nem Track esetén üres.*/
+	public String getText(int rail_id) {
+		int train_id= getUser(rail_id);
+		return (getType(rail_id).equals(Type.R)) ? (train_id==-1) ? getName(rail_id) : String.valueOf(train_id) : "";		
 	}
 	public String toString() {
 		StringBuilder header= new StringBuilder();

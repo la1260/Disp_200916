@@ -27,7 +27,7 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 		return routerecordkey!=null && get(routerecordkey)==get(higherKey(routerecordkey));
 	}
 	/**True, ha a vonat a route_record_no által megadott rekord Rail-ján az elindulásnak megfelelő irányban közlkedik (a megjelenítést nem veszi figyelembe).*/
-	private boolean isOriginalDirection(int train_id, int route_record_no) {
+	public boolean isOriginalDirection(int train_id, int route_record_no) {
 		return (entrySet().stream().filter(e -> e.getKey().train_id==train_id && e.getKey().route_record_no<=route_record_no && isAfterReversion(e.getKey().train_id, e.getKey().route_record_no)).count() & 1)==0;
 	}
 	/**True, ha a route_record_no által megadott rekordot a Train target-jére mutató rekord követi (a vonat kihaladása zajlik).*/
@@ -56,16 +56,16 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 	}
 	/**A route_record_no által megadott rekord Rail-jának max. haladási sebessége. J és L tipusú Rail-ok esetén a teljes váltókörzeten belül előforduló értékek minimuma.*/
 	public double getRailVMax(int train_id, int route_record_no) {
-		RouteRecordKey routerecord= new RouteRecordKey(train_id, route_record_no);
-		Rails.Type type= rails.getType(get(routerecord));
+		RouteRecordKey routerecordkey= new RouteRecordKey(train_id, route_record_no);
+		Rails.Type type= rails.getType(get(routerecordkey));
 		switch (type) {
 		case T:
 		case R:
-			return rails.getVMax(get(routerecord), 0);
+			return rails.getVMax(get(routerecordkey), 0);
 		case J:
 		case L:
 			TreeSet<Double> result= new TreeSet<Double>();
-			result.add(rails.getVMax(get(routerecord), 0));
+			result.add(rails.getVMax(get(routerecordkey), 0));
 			RouteRecordKey nala_kisebb_r_ek_legkozelebbike= entrySet().stream().filter(e0 -> e0.getKey().train_id==train_id && e0.getKey().route_record_no<=route_record_no && rails.getType(e0.getValue()).equals(Rails.Type.R)).max((e1, e2) -> Integer.compare(e1.getKey().route_record_no, e2.getKey().route_record_no)).get().getKey();
 			RouteRecordKey nala_nagyobb_r_ek_legkozelebbike= entrySet().stream().filter(e0 -> e0.getKey().train_id==train_id && route_record_no<=e0.getKey().route_record_no && rails.getType(e0.getValue()).equals(Rails.Type.R)).min((e1, e2) -> Integer.compare(e1.getKey().route_record_no, e2.getKey().route_record_no)).get().getKey();
 			entrySet().stream().filter(e0 -> e0.getKey().train_id==train_id && nala_kisebb_r_ek_legkozelebbike.route_record_no<e0.getKey().route_record_no && e0.getKey().route_record_no<nala_nagyobb_r_ek_legkozelebbike.route_record_no).forEach(e1 ->
@@ -75,6 +75,11 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 		default:
 			return -1;
 		}
+	}
+	/**A route_record_no által megadott rekord Rail-jának hossza.*/
+	public double getRailL(int train_id, int route_record_no) {
+		RouteRecordKey routerecordkey= new RouteRecordKey(train_id, route_record_no);
+		return rails.getL(get(routerecordkey));
 	}
 	/**A route_record_no által megadott rekord Rail-jának aznosítója.*/
 	public int getRailNo(int train_id, int route_record_no) {
