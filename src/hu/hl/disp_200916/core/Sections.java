@@ -24,9 +24,9 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 		SectionRecordValue sectionrecordvalue= entrySet().stream().filter(e0 -> e0.getKey().train_id==train_id && e0.getKey().field.equals(Field.T)).max((e1, e2) -> Double.compare(e1.getKey().value, e2.getKey().value)).get().getValue();
 		return sectionrecordvalue.t+sectionrecordvalue.d;
 	}
-	/**1. Minden vonatra t0-hoz képest dt-vel későbbi időpontban ellenőrzi a vonat gyorsulását, sebességét. Lassulás, állás esetén foglalni próbál, sikeres foglalás esetén átszámolja a Section-okat.<br/>2. Minden vonatra, az új t0+dt időpontbeli állapot alapján beállítja a vonat elejének pozíciója alapján a Rail-ok színét, a vonat végének pozíciója alapján felszabadítja a meghaladott Rail-okat. A kihaladt vonatokat törli a listából, t0+dt értékével tér vissza.*/
+	/**1. Minden vonatra t0-hoz képest dt-vel későbbi időpontban ellenőrzi a vonat gyorsulását, sebességét. Lassulás, állás esetén foglalni próbál, sikeres foglalás esetén átszámolja a Section-okat.<br/>2. Minden vonatra, az új t0+dt időpontbeli állapot alapján beállítja a vonat elejének pozíciója alapján a Rail-ok színét, a vonat végének pozíciója alapján felszabadítja a meghaladott Rail-okat. A kihaladt vonatok Active értékét false-ra állítja, Routes-ból és Sections-ból törli rekordjaikat, t0+dt értékével tér vissza.*/
 	public double step(double t0, double dt) {
-		trains.keySet().forEach(train_id -> {
+		trains.keySet().stream().filter(train_id -> trains.isActive(train_id)).forEach(train_id -> {
 			if (getA(train_id, t0+dt)<0 || getA(train_id, t0+dt)==0 && getV(train_id, t0+dt)==0) {
 				int first_route_record_no= getRouteRecordNoT(train_id, t0+dt)+1;
 				int last_route_record_no= routes.getNearestTrackRouteRecordNo(train_id, first_route_record_no);
@@ -37,7 +37,7 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 				}
 			}
 		});
-		trains.keySet().forEach(train_id -> {
+		trains.keySet().stream().filter(train_id -> trains.isActive(train_id)).forEach(train_id -> {
 			boolean vonat_all_leptetes_elott= getV(train_id, t0)==0;
 			boolean vonat_all_leptetes_utan= getV(train_id, t0+dt)==0;
 			double train_head_position_before_step= getPG(train_id, t0);
@@ -80,7 +80,7 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 				}
 				if (train_tail_position_before_step<=getPGMax(train_id) && getPGMax(train_id)<train_tail_position_after_step) { //Vaonat végének kihaladása: a vonat listában előforduló max. pg értéke a vonatvég léptetés előtti és léptetés utáni pozíciója közé esik.
 					train_tail_route_record_no_after_step= getRouteRecordNoMax(train_id)+1;
-//					trains.remove(train_id);
+					trains.setActive(train_id, false);
 					dispcorelistener.trainTailPassOut(train_id, t0+dt);
 				}
 				int train_tail_rail_no_before_step= routes.getRailNo(train_id, train_tail_route_record_no_before_step);
@@ -96,6 +96,11 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 				dispcorelistener.trainStopped(train_id, t0+dt);
 			}
 			dispcorelistener.trainUpdate(train_id, t0+dt, getA(train_id, t0+dt), getV(train_id, t0+dt), getPIMax(train_id, t0+dt)-getPI(train_id, t0+dt), routes.isOriginalDirection(train_id,  getRouteRecordNoT(train_id, t0+dt)));	
+		});
+		//A kihaladás miatt inaktíwá vált vonatok rekordjainak eltávolítása Sections-ból és Routes-ből.
+		trains.keySet().stream().filter(train_id -> !trains.isActive(train_id)).forEach(train_id -> {
+			routes.entrySet().removeIf(e -> e.getKey().train_id==train_id);
+			entrySet().removeIf(e -> e.getKey().train_id==train_id);
 		});
 		return t0+dt;
 	}	

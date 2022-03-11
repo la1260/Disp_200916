@@ -16,6 +16,13 @@ public class Trains extends TreeMap<Integer, Train> {
 	public double getVMax(int train_id) {
 		return get(train_id).v_max;
 	}	
+	/**A vonat aktív, a frissítésben részt vesz.*/
+	public boolean isActive(int train_id) {
+		return get(train_id).active;
+	}
+	public void setActive(int train_id, boolean active) {
+		get(train_id).active= active;
+	}
 	public String toString() {
 		StringBuilder header= new StringBuilder();
 		StringBuilder body= new StringBuilder();
@@ -34,6 +41,7 @@ class Train {
 	public final double v_max;
 	public final double a_p;
 	public final double a_n;
+	public boolean active= true;
 	public Train(int id, int target_rail_id, double l, double v_max, double a_p, double a_n) {
 		this.id= id;
 		this.target_rail_id= target_rail_id;

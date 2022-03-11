@@ -147,42 +147,42 @@ public class Main implements DispCoreListener {
 		routes.put(1, 20, 26);
 		routes.put(1, 21, 31);
 		
-/*		train.put(2, 27, 100, 90/3.6, 2.5, -5);
-		route.put(2, 0, 27);
-		route.put(2, 1, 18);
-		route.put(2, 2, 6);
-		route.put(2, 3, 0);
-		route.put(2, 4, 9);
-		route.put(2, 5, 3);
-		route.put(2, 6, 14);
-		route.put(2, 7, 24);
-		route.put(2, 8, 24);
-		route.put(2, 9, 24);
-		route.put(2, 10, 15);
-		route.put(2, 11, 4);
-		route.put(2, 12, 16);
-		route.put(2, 13, 5);
-		route.put(2, 14, 17);
-		route.put(2, 15, 25);
-		route.put(2, 16, 26);
-		route.put(2, 17, 26);
-		route.put(2, 18, 25);
-		route.put(2, 19, 25);
-		route.put(2, 20, 26);
-		route.put(2, 21, 31);*/
+		trains.put(2, 27, 100, 90/3.6, 2.5, -5);
+		routes.put(2, 0, 27);
+		routes.put(2, 1, 18);
+		routes.put(2, 2, 6);
+		routes.put(2, 3, 0);
+		routes.put(2, 4, 9);
+		routes.put(2, 5, 3);
+		routes.put(2, 6, 14);
+		routes.put(2, 7, 24);
+		routes.put(2, 8, 24);
+		routes.put(2, 9, 24);
+		routes.put(2, 10, 15);
+		routes.put(2, 11, 4);
+		routes.put(2, 12, 16);
+		routes.put(2, 13, 5);
+		routes.put(2, 14, 17);
+		routes.put(2, 15, 25);
+		routes.put(2, 16, 26);
+		routes.put(2, 17, 26);
+		routes.put(2, 18, 25);
+		routes.put(2, 19, 25);
+		routes.put(2, 20, 26);
+		routes.put(2, 21, 31);
 
 		double t= 0;
-		while (Math.rint(t*10)<3950) {
+		while (Math.rint(t*10)<6000) {
 			if (Math.rint(t*10)==2490) {
 				routes.put(0, 20, 26);
 				routes.put(0, 21, 31);		
 			}
 			t= Math.rint(sections.step(t, 0.1)*10)/10;
 			try {
-				Thread.sleep(100);
+				Thread.sleep(1);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-			} 
+			}
 		}
 		jtextarea.setText(stringbuilder.toString());
 
