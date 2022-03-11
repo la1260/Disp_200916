@@ -6,16 +6,18 @@ import java.util.TreeMap;
 /**Track nem lehet rövidebb 10m-nél.*/
 public class Rails extends TreeMap<Integer, Rail> { 
 	private static final long serialVersionUID= 1L;
-	public enum Type{T, R, L, J};	
-	private final DispCore dispcorelistener;
-	public Rails(DispCore dispcorelistener) {
+	public enum Type{T, R, L, J};
+	/** F: nem használt (fekete)<br/>R: fenntartott (zöld)<br/>M: mozgó vonat által elfoglalt (piros)<br/>S: álló vonat által elfoglalt (sárga)<br/>P: tervezés alatt (kék)*/
+	public enum Status{F, R, M, S, P, U};
+	private final DispCoreListener dispcorelistener;
+	public Rails(DispCoreListener dispcorelistener) {
 		this.dispcorelistener= dispcorelistener;
 	}
-	public void put(int rail_id, Type type, double l, int next_a_rail_id, int next_b_rail_id, int next_c_rail_id, int next_d_rail_id, double v_max_0, double v_max_1, int x, int y, int width, int height) {
-		super.put(rail_id, new Rail(rail_id, type, l, next_a_rail_id, next_b_rail_id, next_c_rail_id, next_d_rail_id, v_max_0, v_max_1, x, y, width, height));
-		dispcorelistener.update(rail_id);
+	public void put(int rail_id, Type type, double l, int next_a_rail_id, int next_b_rail_id, int next_c_rail_id, int next_d_rail_id, double v_max_0, double v_max_1, int x, int y, int width, int height, String name) {
+		super.put(rail_id, new Rail(rail_id, type, l, next_a_rail_id, next_b_rail_id, next_c_rail_id, next_d_rail_id, v_max_0, v_max_1, x, y, width, height, name));
+		setStatus(rail_id, Status.F);
 	}
-	//Statikus függvények (visszatérési értéküket külső tényező nem befolyásolja).
+	//Statikus függvények (ugyanazokra a bemeneti értékekre mindig ugyanazt a visszatérési értéket fogja adni).
 	public Type getType(int rail_id) {
 		return get(rail_id).type;
 	}
@@ -34,6 +36,9 @@ public class Rails extends TreeMap<Integer, Rail> {
 	public int getHeight(int rail_id) {
 		return get(rail_id).height;
 	}
+	public String getName(int rail_id) {
+		return get(rail_id).name;
+	}
 	/**Megadja, hogy a megadott Rail-on 0 (egyenes) vagy 1 (kitérő) irányú-e az áthaladás - az előző és a következő Rail-ok alapján.*/
 	public int getJunctionDir(int rail_id, int prev_rail_id, int next_rail_id) {
 		return ((get(rail_id).next.indexOf(prev_rail_id) | get(rail_id).next.indexOf(next_rail_id)) & 2)>>1;  
@@ -46,6 +51,7 @@ public class Rails extends TreeMap<Integer, Rail> {
 	}
 	//Dinamikus függvények
 	/**A megadott Rail User-jének értéke. J esetén a csomóponthoz csatlakozó összes Rail-t, L esetén a Rail-hoz harmadikként megadott (a Link-et keresztező másik Link) Rail-t vizsgálja.*/
+	//Dinamikus függvények
 	public int getUser(int rail_id) {
 		Rail rail= get(rail_id);		
 		Integer result= rail.user;
@@ -60,18 +66,19 @@ public class Rails extends TreeMap<Integer, Rail> {
 			return result;
 		}		
 	}
-	/**A megadott Rail User-ének beállítása. T és J tipusok esetén nem kerül beállításra; mert ezeket (0 méretük miatt) a felszabadítás nem szabadítaná fel.*/
+	/**A megadott Rail User-ének beállítása.*/
 	public void setUser(int rail_id, int train_id) {
-		if (getType(rail_id).equals(Type.L) || getType(rail_id).equals(Type.R)) {
-			get(rail_id).user= train_id;
-		}
-		dispcorelistener.update(rail_id);
+		get(rail_id).user= train_id;
+		dispcorelistener.graphicsUpdate(rail_id);
 	}
-	public int getColor(int rail_id) {
-		return get(rail_id).color;
+	/**A megadott Rail státuszának (színének) lekérdezése.*/
+	public Status getStatus(int rail_id) {
+		return get(rail_id).status;
 	}
-	public void setColor(int rail_id, int color) {
-		get(rail_id).color= color;
+	/**A megadott Rail státuszának (színének) beállítása.*/
+	public void setStatus(int rail_id, Status status) {
+		get(rail_id).status= status;
+		dispcorelistener.graphicsUpdate(rail_id);
 	}
 	public String toString() {
 		StringBuilder header= new StringBuilder();
@@ -91,12 +98,13 @@ class Rail {
 	public final ArrayList<Integer> next= new ArrayList<Integer>();
 	public final ArrayList<Double> v_max= new ArrayList<Double>();
 	public int user= -1;
-	public int color;
+	public Rails.Status status;
 	public final int x;
 	public final int y;
 	public final int width;
-	public final int height;		
-	public Rail(int id, Rails.Type type, double l, int next_a_rail_id, int next_b_rail_id, int next_c_rail_id, int next_d_rail_id, double v_max_0, double v_max_1, int x, int y, int width, int height) {
+	public final int height;
+	public final String name;
+	public Rail(int id, Rails.Type type, double l, int next_a_rail_id, int next_b_rail_id, int next_c_rail_id, int next_d_rail_id, double v_max_0, double v_max_1, int x, int y, int width, int height, String name) {
 		this.id= id;
 		this.type= type;
 		this.l= l;
@@ -110,6 +118,7 @@ class Rail {
 		this.y= y;
 		this.width= width;
 		this.height= height;
+		this.name= name;
 	}
 	public String toString() {
 		StringBuilder header= new StringBuilder();

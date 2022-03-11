@@ -1,11 +1,8 @@
 package hu.hl.disp_200916.core;
 
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
-import java.util.Map.Entry;
 
 public class Routes extends TreeMap<RouteRecordKey, Integer> {
 	private static final long serialVersionUID= 1L;
@@ -38,11 +35,11 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 		RouteRecordKey routerecordkey= higherKey(new RouteRecordKey(train_id, route_record_no));
 		return routerecordkey!=null && routerecordkey.train_id==train_id && get(routerecordkey)==trains.getTargetItemId(train_id);
 	}
-	/**A route_record_no által megadott rekordot követő legközelebbi, R tipusú Rail-ra mutató route_record_no értéke; minimum route_record_no+1.<br/>Ha nincs ilyen, akkor -1.<br/>Megfordulás esetén az azonosak közül az utolsó, amin nincs megfordulás.*/
-	private int getNearestTrackRouteRecordNo(int train_id, int route_record_no) {
+	/**A route_record_no által megadott rekord és utána levők közül a legközelebbi, R tipusú Rail-ra mutató route_record_no értéke.<br/>Ha nincs ilyen, akkor -1.<br/>Megfordulás esetén ez eredmény az azonosak közül az utolsó, amin nincs megfordulás.*/
+	public int getNearestTrackRouteRecordNo(int train_id, int route_record_no) {
 		Optional<java.util.Map.Entry<RouteRecordKey, Integer>> o_result= entrySet().stream().filter(e ->
 			e.getKey().train_id==train_id &&
-			route_record_no<e.getKey().route_record_no &&
+			route_record_no<=e.getKey().route_record_no &&
 			rails.getType(e.getValue()).equals(Rails.Type.R) &&
 			!isBeforeReversion(e.getKey().train_id, e.getKey().route_record_no)).findFirst();
 		return (o_result.isPresent()) ? o_result.get().getKey().route_record_no : -1;
@@ -53,7 +50,9 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 	}
 	/**A route_record_no által megadott rekord Rail-ján a mozgás végének pozíciója. Értéke a Rail hossza, mínusz megfordulás vagy Train számára le nem foglalt Rail előtt 10m, kihaladáskor, ill. előbbiektől eltérő esetekben 0m.*/
 	public double getPEnd(int train_id, int route_record_no) {
-		return Math.max(rails.getL(get(new RouteRecordKey(train_id, route_record_no)))-(((isBeforeReversion(train_id, route_record_no) || !isUserTrainId(train_id, route_record_no)) && !isPassOut(train_id, route_record_no)) ? 10 : 0), 0);
+		return Math.max(rails.getL(get(new RouteRecordKey(train_id, route_record_no)))-((
+		(isBeforeReversion(train_id, route_record_no) || !isUser(train_id, route_record_no+1, route_record_no+1, train_id)) && !isPassOut(train_id, route_record_no)
+		) ? 10 : 0), 0);
 	}
 	/**A route_record_no által megadott rekord Rail-jának max. haladási sebessége. J és L tipusú Rail-ok esetén a teljes váltókörzeten belül előforduló értékek minimuma.*/
 	public double getRailVMax(int train_id, int route_record_no) {
@@ -77,31 +76,23 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 			return -1;
 		}
 	}
+	/**A route_record_no által megadott rekord Rail-jának aznosítója.*/
+	public int getRailNo(int train_id, int route_record_no) {
+		RouteRecordKey routerecord= new RouteRecordKey(train_id, route_record_no);
+		return get(routerecord);
+	}
 	//Dinamikus függvények (visszatérési értékük az aktuális user-től is függ).
-	/**True, ha route_record_no által megadottat követő rekordtól a legközelebbi R tipusú Rail-ra mutató recordig az összes rekord által mutatott Rail User-je train_id.*/
-	private boolean isUserTrainId(int train_id, int route_record_no) {
-		int nearest_track_route_record_no= getNearestTrackRouteRecordNo(train_id, route_record_no);
-		return -1<nearest_track_route_record_no && entrySet().stream().filter(e0 -> e0.getKey().train_id==train_id && route_record_no<e0.getKey().route_record_no && e0.getKey().route_record_no<=nearest_track_route_record_no).allMatch(e1 -> rails.getUser(e1.getValue())==train_id);
+	/**A megadott Train first_route_rec_id-jétől last_route_rec_id-jáig levő rekordok Rail-jai user_train_id számára foglaltak.*/
+	public boolean isUser(int train_id, int first_route_record_no, int last_route_record_no, int user_train_id) {
+		return entrySet().stream().filter(e0 -> e0.getKey().train_id==train_id && first_route_record_no<=e0.getKey().route_record_no && e0.getKey().route_record_no<=last_route_record_no).allMatch(e1 -> rails.getUser(e1.getValue())==user_train_id);
 	}
-	/**First_route_rec_id-től last_route_rec_id-ig levő rekordok Rail-jai Userjének törlése (-1-re állítása), ahol az User a train_id és az adott rekord nem a last_route_rec_id rekord Rail-jára mutat.<br/>Last_incl = true esetén a last_route_rec_id által mutatott Rail user-je is törlésre kerül (csak kihaladásnál; egyébként last_route_rec_id a vonat által aktuálisan használt route_rec_id-ra mutat, így az nem törlendő).<br/>Visszatérési érték: a megadott last_incl értéke.*/
-	public boolean resetUser(int train_id, int first_route_record_no, int last_route_record_no, boolean last_incl) {
-		entrySet().stream().filter(e0 -> e0.getKey().train_id==train_id && first_route_record_no<=e0.getKey().route_record_no && e0.getKey().route_record_no<=last_route_record_no && rails.getUser(e0.getValue())==train_id && (get(new RouteRecordKey(train_id, last_route_record_no))!=e0.getValue() || last_incl)).forEach(e1 -> rails.setUser(e1.getValue(), -1));
-		return last_incl;
+	/**A megadott Train first_route_rec_id-jétől last_route_rec_id-jáig levő rekordok Rail-jainak user_train_id user-t állít be.*/
+	public void setUser(int train_id, int first_route_record_no, int last_route_record_no, int user_train_id) {
+		entrySet().stream().filter(e0 -> e0.getKey().train_id==train_id && first_route_record_no<=e0.getKey().route_record_no && e0.getKey().route_record_no<=last_route_record_no).forEach(e1 -> rails.setUser(e1.getValue(), user_train_id));
 	}
-	/**A route_record_no által megadottat követő rekordtól a legközelebbi R tipusú Rail-ra mutató rekordig lévő rekordok User-ét train_id-re állítja.<br/>Visszatérési érték az utoljára lefoglalt rekord route_record_no-ja, vagy -1, ha a foglalás másik vonat miatt nem volt lehetséges.*/
-	public int setUser(int train_id, int route_record_no) {
-		int nearest_track_route_record_no= getNearestTrackRouteRecordNo(train_id, route_record_no);
-		if (-1<nearest_track_route_record_no) {
-			Set<Entry<RouteRecordKey, Integer>> set= entrySet().stream().filter(e -> e.getKey().train_id==train_id && route_record_no<e.getKey().route_record_no && e.getKey().route_record_no<=nearest_track_route_record_no).collect(Collectors.toSet());
-			if (set.stream().allMatch(e -> rails.getUser(e.getValue())==-1)) {
-				set.stream().forEach(e -> rails.setUser(e.getValue(), train_id));
-				return nearest_track_route_record_no;
-			} else {
-				return -1;
-			}
-		} else {
-			return -1;
-		}
+	/**A megadott Train first_route_rec_id-jétől last_route_rec_id-jáig levő rekordok Rail-jainak status státuszt (színt) állít be.*/
+	public void setStatus(int train_id, int first_route_record_no, int last_route_record_no, Rails.Status status) {
+		entrySet().stream().filter(e0 -> e0.getKey().train_id==train_id && first_route_record_no<=e0.getKey().route_record_no && e0.getKey().route_record_no<=last_route_record_no).forEach(e1 -> rails.setStatus(e1.getValue(), status));
 	}
 	public String toString() {
 		StringBuilder header= new StringBuilder();
@@ -112,6 +103,7 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 			header.append("rid\t"); body.append(e.getValue()+"\t");
 			header.append("rtp\t"); body.append(rails.getType(e.getValue())+"\t");
 			header.append("usr\t"); body.append(rails.getUser(e.getValue())+"\t");
+			header.append("stt\t"); body.append(rails.getStatus(e.getValue())+"\t");
 			header.append("ikh\t"); body.append(isPassOut(e.getKey().train_id, e.getKey().route_record_no)+"\t");
 			header.append("bfr\t"); body.append(isBeforeReversion(e.getKey().train_id, e.getKey().route_record_no)+"\t");
 			header.append("afr\t"); body.append(isAfterReversion(e.getKey().train_id, e.getKey().route_record_no)+"\t");
