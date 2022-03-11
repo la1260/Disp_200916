@@ -8,7 +8,7 @@ public class Rails extends TreeMap<Integer, Rail> {
 	private static final long serialVersionUID= 1L;
 	public enum Type{T, R, L, J};
 	/** F: nem használt (fekete)<br/>R: fenntartott (zöld)<br/>M: mozgó vonat által elfoglalt (piros)<br/>S: álló vonat által elfoglalt (sárga)<br/>P: tervezés alatt (kék)*/
-	public enum Status{F, R, M, S, P, U};
+	public enum Status{F, R, M, S, P};
 	private final DispCoreListener dispcorelistener;
 	public Rails(DispCoreListener dispcorelistener) {
 		this.dispcorelistener= dispcorelistener;

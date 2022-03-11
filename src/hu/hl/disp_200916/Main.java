@@ -115,8 +115,8 @@ public class Main implements DispCoreListener {
 		route.put(0, 17, 26);
 		route.put(0, 18, 25);
 		route.put(0, 19, 25);
-		route.put(0, 20, 26);
-		route.put(0, 21, 31);
+//		route.put(0, 20, 26);
+//		route.put(0, 21, 31);
 		
 		train.put(1, 27, 100, 90/3.6, 2.5, -5);
 		route.put(1, 0, 27);
@@ -169,10 +169,10 @@ public class Main implements DispCoreListener {
 //		System.out.println("\rRoute:\r"+route); //bukik az eltávolított vonatok esetén
 		double t= 0;
 		while (Math.rint(t*10)<6000) {
-/*			if (Math.rint(t*10)==2490) {
+			if (Math.rint(t*10)==2490) {
 				route.put(0, 20, 26);
 				route.put(0, 21, 31);		
-			}*/
+			}
 			t= Math.rint(section.step(t, 0.1)*10)/10;
 //			System.out.println("t: "+(t-0.1)+"\rSection:\r"+section);
 //			System.out.println("t: "+(t-0.1)+"\nRoute:\n"+route); //bukik az eltávolított vonatok esetén
@@ -208,7 +208,6 @@ public class Main implements DispCoreListener {
 					case P: g.setColor(Color.CYAN); break;
 					case R: g.setColor(Color.GREEN); break;
 					case S: g.setColor(Color.YELLOW); break;
-					case U: g.setColor(Color.WHITE); break;
 					}
 					g.drawString(s, getWidth()>>1, 12);
 				}
