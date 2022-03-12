@@ -1,6 +1,7 @@
 package hu.hl.disp_200916;
 
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -57,7 +58,7 @@ public class Main implements DispCoreListener {
 		frame.setVisible(true);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setLayeredPane(new JLayeredPane());
-		frame.getLayeredPane().setBackground(Color.BLACK);
+//		frame.getLayeredPane().setBackground(Color.BLACK);
 		frame.getLayeredPane().setOpaque(true);
 		frame.getLayeredPane().setVisible(true);
 		
@@ -70,8 +71,8 @@ public class Main implements DispCoreListener {
 		rails.put(1, Rails.Type.J, 0, 7, 11, 10, -1, 72/3.6, 36/3.6, 18, 6, 0, 0, "");
 		rails.put(2, Rails.Type.J, 0, 8, 12, 10, -1, 72/3.6, 36/3.6, 20, 4, 0, 0, "");
 		rails.put(3, Rails.Type.J, 0, 11, 13, 9, 14, 72/3.6, 36/3.6, 20, 6, 0, 0, "");
-		rails.put(4, Rails.Type.J, 0, 15, 16, -1, -1, 72/3.6, -1, 36, 9, 0, 0, "");
-		rails.put(5, Rails.Type.J, 0, 16, 17, -1, -1, 72/3.6, -1, 36, 11, 0, 0, "");
+		rails.put(4, Rails.Type.J, 0, 15, 16, -1, -1, 72/3.6, -1, 36, 10, 0, 0, "");
+		rails.put(5, Rails.Type.J, 0, 16, 17, -1, -1, 72/3.6, -1, 36, 12, 0, 0, "");
 		rails.put(6, Rails.Type.L, 25, 18, 0, -1, -1, -1, -1, 16, 4, 2, 0, "");
 		rails.put(7, Rails.Type.L, 25, 19, 1, -1, -1, -1, -1, 16, 6, 2, 0, "");
 		rails.put(8, Rails.Type.L, 25, 0, 2, -1, -1, -1, -1, 18, 4, 2, 0, "");
@@ -99,31 +100,27 @@ public class Main implements DispCoreListener {
 		rails.put(30, Rails.Type.T, 0, 23, -1, -1, -1, -1, -1, 46, 6, 0, 0, "");
 		rails.put(31, Rails.Type.T, 0, 26, -1, -1, -1, -1, -1, 10, 14, 0, 0, "");
 		
-		trains.put(0, 31, 100, 120/3.6, 2.5, -5);
+		trains.put(0, 27, 100, 120/3.6, 2.5, -5);
 		routes.put(0, 0, 27);
         routes.put(0, 1, 18);
 		routes.put(0, 2, 6);
         routes.put(0, 3, 0);
-		routes.put(0, 4, 9);
-		routes.put(0, 5, 3);
-		routes.put(0, 6, 14);
-		routes.put(0, 7, 24);
-		routes.put(0, 8, 24);
-		routes.put(0, 9, 24);
-		routes.put(0, 10, 15);
-		routes.put(0, 11, 4);
-		routes.put(0, 12, 16);
-		routes.put(0, 13, 5);
-		routes.put(0, 14, 17);
-		routes.put(0, 15, 25);
-		routes.put(0, 16, 26);
-		routes.put(0, 17, 26);
-		routes.put(0, 18, 25);
-		routes.put(0, 19, 25);
-//		route.put(0, 20, 26);
-//		route.put(0, 21, 31);
+		routes.put(0, 4, 8);
+		routes.put(0, 5, 2);
+		routes.put(0, 6, 12);
+		routes.put(0, 7, 20);
+		routes.put(0, 8, 22);
+		routes.put(0, 9, 22);
+		routes.put(0, 10, 20);
+		routes.put(0, 11, 12);
+		routes.put(0, 12, 2);
+		routes.put(0, 13, 8);
+		routes.put(0, 14, 0);
+		routes.put(0, 15, 6);
+		routes.put(0, 16, 18);
+		routes.put(0, 17, 27);
 		
-		trains.put(1, 27, 100, 90/3.6, 2.5, -5);
+		trains.put(1, 31, 100, 90/3.6, 2.5, -5);
 		routes.put(1, 0, 27);
 		routes.put(1, 1, 18);
 		routes.put(1, 2, 6);
@@ -147,7 +144,7 @@ public class Main implements DispCoreListener {
 		routes.put(1, 20, 26);
 		routes.put(1, 21, 31);
 		
-		trains.put(2, 27, 100, 90/3.6, 2.5, -5);
+		trains.put(2, 31, 100, 90/3.6, 2.5, -5);
 		routes.put(2, 0, 27);
 		routes.put(2, 1, 18);
 		routes.put(2, 2, 6);
@@ -173,13 +170,9 @@ public class Main implements DispCoreListener {
 
 		double t= 0;
 		while (Math.rint(t*10)<6000) {
-			if (Math.rint(t*10)==2490) {
-				routes.put(0, 20, 26);
-				routes.put(0, 21, 31);		
-			}
 			t= Math.rint(sections.step(t, 0.1)*10)/10;
 			try {
-				Thread.sleep(1);
+				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -195,6 +188,7 @@ public class Main implements DispCoreListener {
 			gitems.put(rail_id, p= new JPanel() {
 				private static final long serialVersionUID = 1L;
 				public void paint(Graphics g) {
+					int rail_id= gitems.entrySet().stream().filter(e -> e.getValue().equals(this)).findFirst().get().getKey();
 					super.paint(g);
 					switch (rails.getStatus(rail_id)) {
 					case F: g.setColor(Color.BLACK); break;
@@ -205,15 +199,57 @@ public class Main implements DispCoreListener {
 					}
 					switch (rails.getType(rail_id)) {
 					case T: break;
-					case R: g.drawString(rails.getText(rail_id), getWidth()>>1, 12); break;
-					default:
-					  g.drawLine(0, 0, getWidth(), getHeight());
-					  g.drawLine(0, getHeight(), getWidth(), 0);					  
+					case R:
+						g.fillRect(5, 7, getWidth()-10, 2);
+						String text= rails.getText(rail_id);
+						FontMetrics fontmetrics= g.getFontMetrics();
+						if (text!="" && fontmetrics.stringWidth(text)<=getWidth()-17) { // csak akkor írjuk bele a vonat nevét, ha belefér a vonal területére.
+							Color foregroundcolor= g.getColor();
+							g.setColor(new Color(240, 240, 240));
+							g.fillRect((getWidth()>>1)-(fontmetrics.stringWidth(text)>>1), 0, fontmetrics.stringWidth(text), getHeight()-1);
+							g.setColor(foregroundcolor);
+							g.drawString(text, (getWidth()>>1)-(fontmetrics.stringWidth(text)>>1), (fontmetrics.getAscent()+(getHeight()-(fontmetrics.getAscent()+fontmetrics.getDescent()))/2)-1);
+						}
+						break;
+					case J:
+						// setBorder(BorderFactory.createLineBorder(Color.BLACK));
+						break;
+					case L:
+						if (rails.getWidth(rail_id)==0) { // vertical (|)
+							g.drawLine(3, 9, 3, getHeight()-10);
+							g.drawLine(4, 9, 4, getHeight()-10);
+						} else if (rails.getHeight(rail_id)==0) { // horizontal (-)
+							g.drawLine(5, 7, getWidth()-6, 7);
+							g.drawLine(5, 8, getWidth()-6, 8);
+						} else if (0<rails.getHeight(rail_id)/rails.getWidth(rail_id)) { // left (\)
+							int i= -1;
+							while (++i+4<getWidth()-5) {
+								g.drawRect(i+4, 2*i+9, 1, 1);
+							}
+						} else { // right (/)
+							int i= -1;
+							while (++i+4<getWidth()-5) {
+								g.drawRect(i+4, getWidth()-2*i+13, 1, 1);
+							}
+						}
+						if (g.getColor().equals(Color.BLACK)) {
+							frame.getLayeredPane().moveToBack(this);
+						}
+						break;
+//					default:
+//					  g.drawLine(0, 0, getWidth(), getHeight());
+//					  g.drawLine(0, getHeight(), getWidth(), 0);					  
 					}
 				}
 			});
 			frame.getLayeredPane().add(p);
-			p.setBounds(rails.getX(rail_id)*8, rails.getY(rail_id)*16, (rails.getWidth(rail_id)+1)*8, (rails.getHeight(rail_id)+1)*16);
+			p.setBounds(
+				Integer.min(rails.getX(rail_id), rails.getX(rail_id)+rails.getWidth(rail_id)+1)*8,
+				Integer.min(rails.getY(rail_id), rails.getY(rail_id)+rails.getHeight(rail_id))*16,
+				Integer.max(rails.getWidth(rail_id)+1, -rails.getWidth(rail_id)+1)*8,
+				Integer.max(rails.getHeight(rail_id)+1, -rails.getHeight(rail_id)+1)*16
+			);
+			p.setOpaque(false);
 			p.setVisible(true);
 		}
 	}
@@ -221,21 +257,21 @@ public class Main implements DispCoreListener {
 		stringbuilder.append(String.format("Train id_%d_t_%.2f_a_%.2f_v_%.2f_pr_%.2f_oridir_%b\n", train_id, t, a, v, pr, isOriginalDir).replace('_', '\t'));
 	}
 	public void trainHeadPassIn(int train_id, double t) {
-		System.out.println("Eleje behaladt: "+train_id+" t: "+Math.rint(t*10)/10);
+		System.out.println(String.format("Eleje behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 	public void trainTailPassIn(int train_id, double t) {
-		System.out.println("Vége behaladt: "+train_id+" t: "+Math.rint(t*10)/10);
+		System.out.println(String.format("Vége behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 	public void trainHeadPassOut(int train_id, double t) {
-		System.out.println("Eleje kihaladt: "+train_id+" t: "+Math.rint(t*10)/10);
+		System.out.println(String.format("Eleje kihaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 	public void trainTailPassOut(int train_id, double t) {
-		System.out.println("Vége kihaladt: "+train_id+" t: "+Math.rint(t*10)/10);
+		System.out.println(String.format("Vége kihaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 	public void trainStopped(int train_id, double t) {
-		System.out.println("Megállt: "+train_id+" t: "+Math.rint(t*10)/10);
+		System.out.println(String.format("Megállt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 	public void trainStarted(int train_id, double t) {
-		System.out.println("Elindult: "+train_id+" t: "+Math.rint(t*10)/10);
+		System.out.println(String.format("Elindult:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 }
