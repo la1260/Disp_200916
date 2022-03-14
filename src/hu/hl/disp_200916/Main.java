@@ -3,6 +3,8 @@ package hu.hl.disp_200916;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TreeMap;
@@ -25,7 +27,16 @@ public class Main implements DispCoreListener {
 	private Sections sections= new Sections(this, trains, routes);
 	private TreeMap<Integer, JPanel> gitems= new TreeMap<Integer, JPanel>();
 	private JFrame frame= new JFrame();
-	private StringBuilder stringbuilder= new StringBuilder(); 
+	private Object focusedpanel= null;
+	private static final TreeMap<Rails.Status, Color> colors= new TreeMap<Rails.Status, Color>();
+	private StringBuilder stringbuilder= new StringBuilder();
+	static {
+		colors.put(Rails.Status.F, Color.BLACK);
+		colors.put(Rails.Status.M, Color.RED);
+		colors.put(Rails.Status.P, Color.CYAN);
+		colors.put(Rails.Status.R, Color.GREEN);
+		colors.put(Rails.Status.S, Color.YELLOW);
+	}
 	public static long nextms(long currentms, long refms, int periodmonth) { 
 		GregorianCalendar gc= new GregorianCalendar();
 		gc.setTimeInMillis(refms);
@@ -187,62 +198,82 @@ public class Main implements DispCoreListener {
 			JPanel p;
 			gitems.put(rail_id, p= new JPanel() {
 				private static final long serialVersionUID = 1L;
-				public void paint(Graphics g) {
+				public void paint(Graphics graphics) {
 					int rail_id= gitems.entrySet().stream().filter(e -> e.getValue().equals(this)).findFirst().get().getKey();
-					super.paint(g);
-					switch (rails.getStatus(rail_id)) {
-					case F: g.setColor(Color.BLACK); break;
-					case M: g.setColor(Color.RED); break;
-					case P: g.setColor(Color.CYAN); break;
-					case R: g.setColor(Color.GREEN); break;
-					case S: g.setColor(Color.YELLOW); break;
-					}
+					super.paint(graphics);
 					switch (rails.getType(rail_id)) {
-					case T: break;
-					case R:
-						g.fillRect(5, 7, getWidth()-10, 2);
-						String text= rails.getText(rail_id);
-						FontMetrics fontmetrics= g.getFontMetrics();
-						if (text!="" && fontmetrics.stringWidth(text)<=getWidth()-17) { // csak akkor írjuk bele a vonat nevét, ha belefér a vonal területére.
-							Color foregroundcolor= g.getColor();
-							g.setColor(new Color(240, 240, 240));
-							g.fillRect((getWidth()>>1)-(fontmetrics.stringWidth(text)>>1), 0, fontmetrics.stringWidth(text), getHeight()-1);
-							g.setColor(foregroundcolor);
-							g.drawString(text, (getWidth()>>1)-(fontmetrics.stringWidth(text)>>1), (fontmetrics.getAscent()+(getHeight()-(fontmetrics.getAscent()+fontmetrics.getDescent()))/2)-1);
+					case T:
+						graphics.setColor(Color.BLACK);
+						int i= -1;
+						while (++i<getWidth()-1) {
+							graphics.drawRect(i, 2*i+1, 1, 1);
+							graphics.drawRect(getWidth()-i-2, 2*i+1, 1, 1);
 						}
 						break;
 					case J:
 						// setBorder(BorderFactory.createLineBorder(Color.BLACK));
 						break;
+					case R:
+						graphics.setColor(colors.get(rails.getStatus(rail_id)));
+						graphics.fillRect(5, 7, getWidth()-10, 2);
+						String text= rails.getText(rail_id);
+						FontMetrics fontmetrics= graphics.getFontMetrics();
+						if (text!="" && fontmetrics.stringWidth(text)<=getWidth()-17) { // csak akkor írunk bele scöveget, ha belefér a vonal területére.
+							graphics.setColor(new Color(240, 240, 240));
+							graphics.fillRect((getWidth()>>1)-(fontmetrics.stringWidth(text)>>1), 0, fontmetrics.stringWidth(text), getHeight()-1);
+							graphics.setColor(colors.get(rails.getStatus(rail_id)));
+							graphics.drawString(text, (getWidth()>>1)-(fontmetrics.stringWidth(text)>>1), (fontmetrics.getAscent()+(getHeight()-(fontmetrics.getAscent()+fontmetrics.getDescent())>>1))-1);
+						}
+						break;
 					case L:
+						graphics.setColor(colors.get(rails.getStatus(rail_id)));
 						if (rails.getWidth(rail_id)==0) { // vertical (|)
-							g.drawLine(3, 9, 3, getHeight()-10);
-							g.drawLine(4, 9, 4, getHeight()-10);
+							graphics.drawLine(3, 9, 3, getHeight()-10);
+							graphics.drawLine(4, 9, 4, getHeight()-10);
 						} else if (rails.getHeight(rail_id)==0) { // horizontal (-)
-							g.drawLine(5, 7, getWidth()-6, 7);
-							g.drawLine(5, 8, getWidth()-6, 8);
+							graphics.drawLine(5, 7, getWidth()-6, 7);
+							graphics.drawLine(5, 8, getWidth()-6, 8);
 						} else if (0<rails.getHeight(rail_id)/rails.getWidth(rail_id)) { // left (\)
-							int i= -1;
-							while (++i+4<getWidth()-5) {
-								g.drawRect(i+4, 2*i+9, 1, 1);
+							i= -1;
+							while (++i<getWidth()-9) {
+								graphics.drawRect(i+4, 2*i+9, 1, 1);
 							}
 						} else { // right (/)
-							int i= -1;
-							while (++i+4<getWidth()-5) {
-								g.drawRect(i+4, getWidth()-2*i+13, 1, 1);
+							i= -1;
+							while (++i<getWidth()-9) {
+								graphics.drawRect(i+4, getWidth()-2*i+13, 1, 1);
 							}
 						}
-						if (g.getColor().equals(Color.BLACK)) {
+						if (graphics.getColor().equals(Color.BLACK)) {
 							frame.getLayeredPane().moveToBack(this);
 						}
 						break;
-//					default:
-//					  g.drawLine(0, 0, getWidth(), getHeight());
-//					  g.drawLine(0, getHeight(), getWidth(), 0);					  
 					}
 				}
 			});
 			frame.getLayeredPane().add(p);
+			p.addMouseListener(new MouseListener() {
+				public void mouseEntered(MouseEvent mouseevent) {
+					focusedpanel= mouseevent.getSource();
+				}
+				public void mouseClicked(MouseEvent mouseevent) {}
+				public void mouseExited(MouseEvent mouseevent) {
+					focusedpanel= null;
+					frame.setTitle("");
+				}
+				public void mousePressed(MouseEvent mouseevent) {}
+				public void mouseReleased(MouseEvent mouseevent) {}
+			});
+			switch (rails.getType(rail_id)) {
+			case L:
+			case R:
+				frame.getLayeredPane().moveToBack(p);
+				break;
+			case J:
+			case T:
+				frame.getLayeredPane().moveToFront(p);
+				break;
+			}
 			p.setBounds(
 				Integer.min(rails.getX(rail_id), rails.getX(rail_id)+rails.getWidth(rail_id)+1)*8,
 				Integer.min(rails.getY(rail_id), rails.getY(rail_id)+rails.getHeight(rail_id))*16,
@@ -254,7 +285,13 @@ public class Main implements DispCoreListener {
 		}
 	}
 	public void trainUpdate(int train_id, double t, double a, double v, double pr, boolean isOriginalDir) {
-		stringbuilder.append(String.format("Train id_%d_t_%.2f_a_%.2f_v_%.2f_pr_%.2f_oridir_%b\n", train_id, t, a, v, pr, isOriginalDir).replace('_', '\t'));
+		if (focusedpanel!=null) {
+			int rail_id= gitems.entrySet().stream().filter(e -> e.getValue().equals(focusedpanel)).findFirst().get().getKey();
+			if (rails.getUser(rail_id)==train_id) {
+				frame.setTitle(String.format("rail_id:%d, train id:%d, t:%.2f, a:%.2f, v:%.2f, pr:%.2f, d:%b", rail_id, train_id, t, a, v, pr, isOriginalDir).replace('_', '\t'));
+			}
+		}
+		// stringbuilder.append(String.format("Train id_%d_t_%.2f_a_%.2f_v_%.2f_pr_%.2f_oridir_%b\n", train_id, t, a, v, pr, isOriginalDir).replace('_', '\t'));
 	}
 	public void trainHeadPassIn(int train_id, double t) {
 		System.out.println(String.format("Eleje behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));

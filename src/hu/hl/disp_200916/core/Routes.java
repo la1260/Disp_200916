@@ -18,16 +18,25 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 	//Statikus függvények (visszatérési értékük csak az útvonaltól függ). 
 	/**True, ha a route_record_no által megadott rekordon végighaladás után megfordulás történik.*/
 	public boolean isBeforeReversion(int train_id, int route_record_no) {
-		RouteRecordKey routerecordkey= higherKey(new RouteRecordKey(train_id, route_record_no));
-		return routerecordkey!=null && get(routerecordkey)==get(lowerKey(routerecordkey));
+//		RouteRecordKey routerecordkey= higherKey(new RouteRecordKey(train_id, route_record_no));
+//		return routerecordkey!=null && get(routerecordkey)==get(lowerKey(routerecordkey));
+		Optional<java.util.Map.Entry<RouteRecordKey, Integer>> o_route_record_no= entrySet().stream().filter(e -> e.getKey().train_id==train_id && e.getKey().route_record_no==route_record_no).findFirst();
+		Optional<java.util.Map.Entry<RouteRecordKey, Integer>> o_route_record_no_next= entrySet().stream().filter(e -> e.getKey().train_id==train_id && e.getKey().route_record_no==route_record_no+1).findFirst();
+		return o_route_record_no.isPresent() && o_route_record_no_next.isPresent() && o_route_record_no.get().getValue()==o_route_record_no_next.get().getValue();
 	}
 	/**True, ha a route_record_no által megadott rekordon az elindulás megfordulás után történik.*/
 	public boolean isAfterReversion(int train_id, int route_record_no) {
-		RouteRecordKey routerecordkey= lowerKey(new RouteRecordKey(train_id, route_record_no));
-		return routerecordkey!=null && get(routerecordkey)==get(higherKey(routerecordkey));
+//		RouteRecordKey routerecordkey= lowerKey(new RouteRecordKey(train_id, route_record_no));
+//		return routerecordkey!=null && get(routerecordkey)==get(higherKey(routerecordkey));
+		Optional<java.util.Map.Entry<RouteRecordKey, Integer>> o_route_record_no= entrySet().stream().filter(e -> e.getKey().train_id==train_id && e.getKey().route_record_no==route_record_no).findFirst();
+		Optional<java.util.Map.Entry<RouteRecordKey, Integer>> o_route_record_no_prev= entrySet().stream().filter(e -> e.getKey().train_id==train_id && e.getKey().route_record_no==route_record_no-1).findFirst();
+		return o_route_record_no.isPresent() && o_route_record_no_prev.isPresent() && o_route_record_no.get().getValue()==o_route_record_no_prev.get().getValue();
 	}
 	/**True, ha a vonat a route_record_no által megadott rekord Rail-ján az elindulásnak megfelelő irányban közlkedik (a megjelenítést nem veszi figyelembe).*/
 	public boolean isOriginalDirection(int train_id, int route_record_no) {
+		if (train_id==1) {
+			System.out.print("");
+		}
 		return (entrySet().stream().filter(e -> e.getKey().train_id==train_id && e.getKey().route_record_no<=route_record_no && isAfterReversion(e.getKey().train_id, e.getKey().route_record_no)).count() & 1)==0;
 	}
 	/**True, ha a route_record_no által megadott rekordot a Train target-jére mutató rekord követi (a vonat kihaladása zajlik).*/
