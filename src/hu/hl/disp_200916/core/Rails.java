@@ -1,7 +1,7 @@
 package hu.hl.disp_200916.core;
 
-import java.util.ArrayList;
 import java.util.TreeMap;
+import java.util.Vector;
 
 /**Track nem lehet rövidebb 10m-nél.*/
 public class Rails extends TreeMap<Integer, Rail> { 
@@ -49,9 +49,17 @@ public class Rails extends TreeMap<Integer, Rail> {
 		Double result= record.v_max.get(junction_dir);
 		return (result==-1) ?  Double.POSITIVE_INFINITY : result;
 	}
+	/**A megadott Rail-hoz in_rail_id irányából történő behaladás esetén a kimeneti Rail_id-k visszaadása.<br/>in_rail_id= -1 esetén az első bekötetlen bemenet felől (Terminal esetén így kérdezhető le a kimenet).<br/>Nem csatlakozó bemenet esetén üres lista visszaadása.*/
+	public Vector<Integer> getOutRailIds(int rail_id, int in_rail_id) {
+		Vector<Integer> result= new Vector<Integer>(get(rail_id).next);
+		if (getType(rail_id).equals(Type.L)) result.setSize(2);
+		int index= result.indexOf(in_rail_id);
+		if (-1<index && getType(rail_id).equals(Type.J)) result.removeElementAt(index^2);
+		result.removeIf(i -> i==-1 || i==in_rail_id || index==-1);
+		return result;
+	}
 	//Dinamikus függvények
 	/**A megadott Rail User-jének értéke. J esetén a csomóponthoz csatlakozó összes Rail-t, L esetén a Rail-hoz harmadikként megadott (a Link-et keresztező másik Link) Rail-t vizsgálja.*/
-	//Dinamikus függvények
 	public int getUser(int rail_id) {
 		Rail rail= get(rail_id);		
 		Integer result= rail.user;
@@ -100,8 +108,8 @@ class Rail {
 	public final int id;
 	public final Rails.Type type;
 	public final double l;
-	public final ArrayList<Integer> next= new ArrayList<Integer>();
-	public final ArrayList<Double> v_max= new ArrayList<Double>();
+	public final Vector<Integer> next= new Vector<Integer>();
+	public final Vector<Double> v_max= new Vector<Double>();
 	public int user= -1;
 	public Rails.Status status;
 	public final int x;

@@ -1,12 +1,16 @@
 package hu.hl.disp_200916.core;
 
 import java.util.TreeMap;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 	private static final long serialVersionUID= 1L;
 	private final Trains trains;
 	private final Routes routes;
+	private final static Random random= new Random();
 	/**A lista kétféle indexelésének (globális idő vagy globális pozició) kiválasztása.*/
 	public static enum Field {T, P}
 	private final DispCoreListener dispcorelistener;
@@ -24,8 +28,84 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 		SectionRecordValue sectionrecordvalue= entrySet().stream().filter(e0 -> e0.getKey().train_id==train_id && e0.getKey().field.equals(Field.T)).max((e1, e2) -> Double.compare(e1.getKey().value, e2.getKey().value)).get().getValue();
 		return sectionrecordvalue.t+sectionrecordvalue.d;
 	}
-	/**1. Minden vonatra t0-hoz képest dt-vel későbbi időpontban ellenőrzi a vonat gyorsulását, sebességét. Lassulás, állás esetén foglalni próbál, sikeres foglalás esetén átszámolja a Section-okat.<br/>2. Minden vonatra, az új t0+dt időpontbeli állapot alapján beállítja a vonat elejének pozíciója alapján a Rail-ok színét, a vonat végének pozíciója alapján felszabadítja a meghaladott Rail-okat. A kihaladt vonatok Active értékét false-ra állítja, Routes-ból és Sections-ból törli rekordjaikat, t0+dt értékével tér vissza.*/
+	/**1. Ellenőrzi, hogy az előírt mennyiségű vonat aktív-e. Ha nem, és van inaktív vonat, egyet véletlenszerűen kiválaszt azok közül, induló útvonallal látja el, aktíwá teszi, és ugrunk vissza az 1 . ponthoz.<br/>2. Minden vonatra t0-hoz képest dt-vel későbbi időpontban ellenőrzi a vonat gyorsulását, sebességét. Lassulás, állás esetén foglalni próbál, sikeres foglalás esetén átszámolja a Section-okat.<br/>3. Minden vonatra, az új t0+dt időpontbeli állapot alapján beállítja a vonat elejének pozíciója alapján a Rail-ok színét, a vonat végének pozíciója alapján felszabadítja a meghaladott Rail-okat. A kihaladt vonatok Active értékét false-ra állítja, Routes-ból és Sections-ból törli rekordjaikat, t0+dt értékével tér vissza.*/
 	public double step(double t0, double dt) {
+		List<Integer> inactive_train_ids;
+		while (trains.keySet().stream().filter(train_id -> trains.isActive(train_id)).count()<3 && !(inactive_train_ids= trains.keySet().stream().filter(train_id -> !trains.isActive(train_id)).collect(Collectors.toList())).isEmpty()) {
+			int train_id= inactive_train_ids.get(random.nextInt(inactive_train_ids.size()));
+			switch (train_id) {
+			case 0:
+				routes.put(0, 0, 27);
+		        routes.put(0, 1, 18);
+				routes.put(0, 2, 6);
+		        routes.put(0, 3, 0);
+				routes.put(0, 4, 8);
+				routes.put(0, 5, 2);
+				routes.put(0, 6, 12);
+				routes.put(0, 7, 20);
+				routes.put(0, 8, 22);
+				routes.put(0, 9, 22);
+				routes.put(0, 10, 20);
+				routes.put(0, 11, 12);
+				routes.put(0, 12, 2);
+				routes.put(0, 13, 8);
+				routes.put(0, 14, 0);
+				routes.put(0, 15, 6);
+				routes.put(0, 16, 18);
+				routes.put(0, 17, 27);
+				break;
+			case 1:
+				routes.put(1, 0, 27);
+				routes.put(1, 1, 18);
+				routes.put(1, 2, 6);
+				routes.put(1, 3, 0);
+				routes.put(1, 4, 9);
+				routes.put(1, 5, 3);
+				routes.put(1, 6, 14);
+				routes.put(1, 7, 24);
+				routes.put(1, 8, 24);
+				routes.put(1, 9, 24);
+				routes.put(1, 10, 15);
+				routes.put(1, 11, 4);
+				routes.put(1, 12, 16);
+				routes.put(1, 13, 5);
+				routes.put(1, 14, 17);
+				routes.put(1, 15, 25);
+				routes.put(1, 16, 26);
+				routes.put(1, 17, 26);
+				routes.put(1, 18, 25);
+				routes.put(1, 19, 25);
+				routes.put(1, 20, 26);
+				routes.put(1, 21, 31);	
+				break;
+			case 2:
+				routes.put(2, 0, 27);
+				routes.put(2, 1, 18);
+				routes.put(2, 2, 6);
+				routes.put(2, 3, 0);
+				routes.put(2, 4, 9);
+				routes.put(2, 5, 3);
+				routes.put(2, 6, 14);
+				routes.put(2, 7, 24);
+				routes.put(2, 8, 24);
+				routes.put(2, 9, 24);
+				routes.put(2, 10, 15);
+				routes.put(2, 11, 4);
+				routes.put(2, 12, 16);
+				routes.put(2, 13, 5);
+				routes.put(2, 14, 17);
+				routes.put(2, 15, 25);
+				routes.put(2, 16, 26);
+				routes.put(2, 17, 26);
+				routes.put(2, 18, 25);
+				routes.put(2, 19, 25);
+				routes.put(2, 20, 26);
+				routes.put(2, 21, 31);
+				break;
+			}
+			trains.setActive(train_id, true);
+			System.out.println(train_id);
+		}
 		trains.keySet().stream().filter(train_id -> trains.isActive(train_id)).forEach(train_id -> {
 			if (getA(train_id, t0+dt)<0 || getA(train_id, t0+dt)==0 && getV(train_id, t0+dt)==0) {
 				int first_route_record_no= getRouteRecordNoT(train_id, t0+dt)+1;

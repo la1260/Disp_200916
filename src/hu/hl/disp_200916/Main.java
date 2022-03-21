@@ -5,8 +5,6 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.TreeMap;
 
 import javax.swing.JFrame;
@@ -17,55 +15,26 @@ import javax.swing.JTextArea;
 import hu.hl.disp_200916.core.DispCoreListener;
 import hu.hl.disp_200916.core.Rails;
 import hu.hl.disp_200916.core.Routes;
+import hu.hl.disp_200916.core.RouteBuilder;
 import hu.hl.disp_200916.core.Sections;
 import hu.hl.disp_200916.core.Trains;
+import hu.hl.disp_200916.core.Rails.Type;
 
-public class Main implements DispCoreListener {
+public class Main implements DispCoreListener, MouseListener {
 	private Rails rails= new Rails(this);
 	private Trains trains= new Trains();
 	private Routes routes= new Routes(rails, trains);
 	private Sections sections= new Sections(this, trains, routes);
-	private TreeMap<Integer, JPanel> gitems= new TreeMap<Integer, JPanel>();
+	private TreeMap<Integer, RailSymbol> railsymbols= new TreeMap<Integer, RailSymbol>();
 	private JFrame frame= new JFrame();
-	private Object focusedpanel= null;
-	private static final TreeMap<Rails.Status, Color> colors= new TreeMap<Rails.Status, Color>();
+	private RailSymbol focusedrailsymbol= null;
 	private StringBuilder stringbuilder= new StringBuilder();
-	static {
-		colors.put(Rails.Status.F, Color.BLACK);
-		colors.put(Rails.Status.M, Color.RED);
-		colors.put(Rails.Status.P, Color.CYAN);
-		colors.put(Rails.Status.R, Color.GREEN);
-		colors.put(Rails.Status.S, Color.YELLOW);
-	}
-	public static long nextms(long currentms, long refms, int periodmonth) { 
-		GregorianCalendar gc= new GregorianCalendar();
-		gc.setTimeInMillis(refms);
-		int rmm= gc.get(Calendar.MONTH)%periodmonth;
-		int rdm= gc.get(Calendar.DATE);
-		gc.setTimeInMillis(currentms);
-		gc.add(Calendar.DATE, 1);
-		while (gc.get(Calendar.MONTH)%periodmonth!=rmm || gc.get(Calendar.DATE)!=rdm) {
-			gc.add(Calendar.DATE, 1);
-		}
-		return gc.getTimeInMillis();
-	}
 	public static void main(String[] args) {
 		new Main();
-/*		TreeMap<Long, String> tm= new TreeMap<Long, String>();
-		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.OCTOBER, 25).getTimeInMillis(), 2), "v��zsz��mla");
-		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.OCTOBER, 15).getTimeInMillis(), 1), "villany��ra, g��zsz��mla");
-		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.NOVEMBER, 4).getTimeInMillis(), 1), "g��z��ra, villanysz��mla");
-		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.NOVEMBER, 1).getTimeInMillis(), 1), "flipsz��mla");
-		tm.put(nextms(new GregorianCalendar(2020, Calendar.DECEMBER, 24).getTimeInMillis(), new GregorianCalendar(2020, Calendar.NOVEMBER, 7).getTimeInMillis(), 3), "szem��td��j, biztos��t��s");
-		System.out.println(
-			tm
-//			String.format("%ty-%1$tm-%1$td %1$tH:%1$tM:%1$tS", nextms)+"\t"
-		); */
 	}
 	public Main() {
-		
 		frame.setLayout(null);
-		frame.setBounds(200, 40, 800, 920);
+		frame.setBounds(200, 40, 800, 500);
 		frame.setVisible(true);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setLayeredPane(new JLayeredPane());
@@ -73,13 +42,8 @@ public class Main implements DispCoreListener {
 		frame.getLayeredPane().setOpaque(true);
 		frame.getLayeredPane().setVisible(true);
 		
-		JTextArea jtextarea= new JTextArea();
-		jtextarea.setBounds(500, 20, 200, 200);
-		jtextarea.setVisible(true);
-		frame.getLayeredPane().add(jtextarea);
-		
-		rails.put(0, Rails.Type.J, 0, 6, 8, 9, -1, 72/3.6, 36/3.6, 18, 4, 0, 0, "");
-		rails.put(1, Rails.Type.J, 0, 7, 11, 10, -1, 72/3.6, 36/3.6, 18, 6, 0, 0, "");
+		rails.put(0, Rails.Type.J, 0, 8, 6, 9, -1, 72/3.6, 36/3.6, 18, 4, 0, 0, "");
+		rails.put(1, Rails.Type.J, 0, 11, 7, 10, -1, 72/3.6, 36/3.6, 18, 6, 0, 0, "");
 		rails.put(2, Rails.Type.J, 0, 8, 12, 10, -1, 72/3.6, 36/3.6, 20, 4, 0, 0, "");
 		rails.put(3, Rails.Type.J, 0, 11, 13, 9, 14, 72/3.6, 36/3.6, 20, 6, 0, 0, "");
 		rails.put(4, Rails.Type.J, 0, 15, 16, -1, -1, 72/3.6, -1, 36, 10, 0, 0, "");
@@ -110,80 +74,50 @@ public class Main implements DispCoreListener {
 		rails.put(29, Rails.Type.T, 0, 22, -1, -1, -1, -1, -1, 46, 4, 0, 0, "");
 		rails.put(30, Rails.Type.T, 0, 23, -1, -1, -1, -1, -1, 46, 6, 0, 0, "");
 		rails.put(31, Rails.Type.T, 0, 26, -1, -1, -1, -1, -1, 10, 14, 0, 0, "");
+
+		JTextArea jtextarea= new JTextArea();
+		jtextarea.setBounds(500, 20, 200, 200);
+		jtextarea.setVisible(true);
+		frame.getLayeredPane().add(jtextarea);
+
+/*		System.out.println(rails.getOutRailIds(0, 6));
+		System.out.println(rails.getOutRailIds(0, 7));
+		System.out.println(rails.getOutRailIds(0, 8));
+		System.out.println(rails.getOutRailIds(0, 9));
+		System.out.println(rails.getOutRailIds(0, 10));
 		
-		trains.put(0, 27, 100, 120/3.6, 2.5, -5);
-		routes.put(0, 0, 27);
-        routes.put(0, 1, 18);
-		routes.put(0, 2, 6);
-        routes.put(0, 3, 0);
-		routes.put(0, 4, 8);
-		routes.put(0, 5, 2);
-		routes.put(0, 6, 12);
-		routes.put(0, 7, 20);
-		routes.put(0, 8, 22);
-		routes.put(0, 9, 22);
-		routes.put(0, 10, 20);
-		routes.put(0, 11, 12);
-		routes.put(0, 12, 2);
-		routes.put(0, 13, 8);
-		routes.put(0, 14, 0);
-		routes.put(0, 15, 6);
-		routes.put(0, 16, 18);
-		routes.put(0, 17, 27);
+		System.out.println(rails.getOutRailIds(9, 0));
+		System.out.println(rails.getOutRailIds(9, 3));
+		System.out.println(rails.getOutRailIds(9, 7));
+		System.out.println(rails.getOutRailIds(9, 10));
+
+		System.out.println(rails.getOutRailIds(3, 9));
+		System.out.println(rails.getOutRailIds(3, 11));
+		System.out.println(rails.getOutRailIds(3, 13));
+		System.out.println(rails.getOutRailIds(3, 14));
+		System.out.println(rails.getOutRailIds(3, 10));
 		
-		trains.put(1, 31, 100, 90/3.6, 2.5, -5);
-		routes.put(1, 0, 27);
-		routes.put(1, 1, 18);
-		routes.put(1, 2, 6);
-		routes.put(1, 3, 0);
-		routes.put(1, 4, 9);
-		routes.put(1, 5, 3);
-		routes.put(1, 6, 14);
-		routes.put(1, 7, 24);
-		routes.put(1, 8, 24);
-		routes.put(1, 9, 24);
-		routes.put(1, 10, 15);
-		routes.put(1, 11, 4);
-		routes.put(1, 12, 16);
-		routes.put(1, 13, 5);
-		routes.put(1, 14, 17);
-		routes.put(1, 15, 25);
-		routes.put(1, 16, 26);
-		routes.put(1, 17, 26);
-		routes.put(1, 18, 25);
-		routes.put(1, 19, 25);
-		routes.put(1, 20, 26);
-		routes.put(1, 21, 31);
+		System.out.println(rails.getOutRailIds(18, 27));
+		System.out.println(rails.getOutRailIds(18, 6));
+		System.out.println(rails.getOutRailIds(18, 0));
 		
-		trains.put(2, 31, 100, 90/3.6, 2.5, -5);
-		routes.put(2, 0, 27);
-		routes.put(2, 1, 18);
-		routes.put(2, 2, 6);
-		routes.put(2, 3, 0);
-		routes.put(2, 4, 9);
-		routes.put(2, 5, 3);
-		routes.put(2, 6, 14);
-		routes.put(2, 7, 24);
-		routes.put(2, 8, 24);
-		routes.put(2, 9, 24);
-		routes.put(2, 10, 15);
-		routes.put(2, 11, 4);
-		routes.put(2, 12, 16);
-		routes.put(2, 13, 5);
-		routes.put(2, 14, 17);
-		routes.put(2, 15, 25);
-		routes.put(2, 16, 26);
-		routes.put(2, 17, 26);
-		routes.put(2, 18, 25);
-		routes.put(2, 19, 25);
-		routes.put(2, 20, 26);
-		routes.put(2, 21, 31);
+		System.out.println(rails.getOutRailIds(27, -1));*/
+		
+//		RouteBuilder routebuilder= new RouteBuilder(rails, routes, 31);
+//		routebuilder.clear();
+//		System.exit(16);
+		
+		trains.put(0, 27, 27, 100, 120/3.6, 0.398, -0.796);
+		trains.put(1, 27, 31, 100, 90/3.6, 0.398, -0.796);
+		trains.put(2, 27, 31, 100, 90/3.6, 0.398, -0.796);
+		
+
 
 		double t= 0;
-		while (Math.rint(t*10)<6000) {
+		while (Math.rint(t*10)<6400) {
 			t= Math.rint(sections.step(t, 0.1)*10)/10;
 			try {
-				Thread.sleep(100);
+				Thread.sleep(1);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -192,123 +126,156 @@ public class Main implements DispCoreListener {
 
 	}
 	public void railUpdate(int rail_id) {
-		if (gitems.containsKey(rail_id)) {
-			gitems.get(rail_id).repaint();
+		if (railsymbols.containsKey(rail_id)) {
+			railsymbols.get(rail_id).repaint();
 		} else {
-			JPanel p;
-			gitems.put(rail_id, p= new JPanel() {
-				private static final long serialVersionUID = 1L;
-				public void paint(Graphics graphics) {
-					int rail_id= gitems.entrySet().stream().filter(e -> e.getValue().equals(this)).findFirst().get().getKey();
-					super.paint(graphics);
-					switch (rails.getType(rail_id)) {
-					case T:
-						graphics.setColor(Color.BLACK);
-						int i= -1;
-						while (++i<getWidth()-1) {
-							graphics.drawRect(i, 2*i+1, 1, 1);
-							graphics.drawRect(getWidth()-i-2, 2*i+1, 1, 1);
-						}
-						break;
-					case J:
-						// setBorder(BorderFactory.createLineBorder(Color.BLACK));
-						break;
-					case R:
-						graphics.setColor(colors.get(rails.getStatus(rail_id)));
-						graphics.fillRect(5, 7, getWidth()-10, 2);
-						String text= rails.getText(rail_id);
-						FontMetrics fontmetrics= graphics.getFontMetrics();
-						if (text!="" && fontmetrics.stringWidth(text)<=getWidth()-17) { // csak akkor írunk bele scöveget, ha belefér a vonal területére.
-							graphics.setColor(new Color(240, 240, 240));
-							graphics.fillRect((getWidth()>>1)-(fontmetrics.stringWidth(text)>>1), 0, fontmetrics.stringWidth(text), getHeight()-1);
-							graphics.setColor(colors.get(rails.getStatus(rail_id)));
-							graphics.drawString(text, (getWidth()>>1)-(fontmetrics.stringWidth(text)>>1), (fontmetrics.getAscent()+(getHeight()-(fontmetrics.getAscent()+fontmetrics.getDescent())>>1))-1);
-						}
-						break;
-					case L:
-						graphics.setColor(colors.get(rails.getStatus(rail_id)));
-						if (rails.getWidth(rail_id)==0) { // vertical (|)
-							graphics.drawLine(3, 9, 3, getHeight()-10);
-							graphics.drawLine(4, 9, 4, getHeight()-10);
-						} else if (rails.getHeight(rail_id)==0) { // horizontal (-)
-							graphics.drawLine(5, 7, getWidth()-6, 7);
-							graphics.drawLine(5, 8, getWidth()-6, 8);
-						} else if (0<rails.getHeight(rail_id)/rails.getWidth(rail_id)) { // left (\)
-							i= -1;
-							while (++i<getWidth()-9) {
-								graphics.drawRect(i+4, 2*i+9, 1, 1);
-							}
-						} else { // right (/)
-							i= -1;
-							while (++i<getWidth()-9) {
-								graphics.drawRect(i+4, getWidth()-2*i+13, 1, 1);
-							}
-						}
-						if (graphics.getColor().equals(Color.BLACK)) {
-							frame.getLayeredPane().moveToBack(this);
-						}
-						break;
-					}
-				}
-			});
-			frame.getLayeredPane().add(p);
-			p.addMouseListener(new MouseListener() {
-				public void mouseEntered(MouseEvent mouseevent) {
-					focusedpanel= mouseevent.getSource();
-				}
-				public void mouseClicked(MouseEvent mouseevent) {}
-				public void mouseExited(MouseEvent mouseevent) {
-					focusedpanel= null;
-					frame.setTitle("");
-				}
-				public void mousePressed(MouseEvent mouseevent) {}
-				public void mouseReleased(MouseEvent mouseevent) {}
-			});
-			switch (rails.getType(rail_id)) {
-			case L:
-			case R:
-				frame.getLayeredPane().moveToBack(p);
-				break;
-			case J:
-			case T:
-				frame.getLayeredPane().moveToFront(p);
-				break;
-			}
-			p.setBounds(
-				Integer.min(rails.getX(rail_id), rails.getX(rail_id)+rails.getWidth(rail_id)+1)*8,
-				Integer.min(rails.getY(rail_id), rails.getY(rail_id)+rails.getHeight(rail_id))*16,
-				Integer.max(rails.getWidth(rail_id)+1, -rails.getWidth(rail_id)+1)*8,
-				Integer.max(rails.getHeight(rail_id)+1, -rails.getHeight(rail_id)+1)*16
-			);
-			p.setOpaque(false);
-			p.setVisible(true);
+			RailSymbol railsymbol= new RailSymbol(rails, rail_id, frame.getLayeredPane());
+			railsymbol.addMouseListener(this);
+			railsymbols.put(rail_id, railsymbol);
 		}
 	}
 	public void trainUpdate(int train_id, double t, double a, double v, double pr, boolean isOriginalDir) {
-		if (focusedpanel!=null) {
-			int rail_id= gitems.entrySet().stream().filter(e -> e.getValue().equals(focusedpanel)).findFirst().get().getKey();
+		if (focusedrailsymbol!=null) {
+			int rail_id= railsymbols.entrySet().stream().filter(e -> e.getValue().equals(focusedrailsymbol)).findFirst().get().getKey();
 			if (rails.getUser(rail_id)==train_id) {
-				frame.setTitle(String.format("rail_id:%d, train id:%d, t:%.2f, a:%.2f, v:%.2f, pr:%.2f, d:%b", rail_id, train_id, t, a, v, pr, isOriginalDir).replace('_', '\t'));
+//				frame.setTitle(String.format("rail_id:%d, train id:%d, t:%.2f, a:%.2f, v:%.2f, pr:%.2f, d:%b", rail_id, train_id, t, a, v, pr, isOriginalDir).replace('_', '\t'));
 			}
 		}
-		// stringbuilder.append(String.format("Train id_%d_t_%.2f_a_%.2f_v_%.2f_pr_%.2f_oridir_%b\n", train_id, t, a, v, pr, isOriginalDir).replace('_', '\t'));
+//		stringbuilder.append(String.format("Train id_%d_t_%.2f_a_%.2f_v_%.2f_pr_%.2f_oridir_%b\n", train_id, t, a, v, pr, isOriginalDir).replace('_', '\t'));
 	}
 	public void trainHeadPassIn(int train_id, double t) {
-		System.out.println(String.format("Eleje behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+//		System.out.println(String.format("Eleje behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 	public void trainTailPassIn(int train_id, double t) {
-		System.out.println(String.format("Vége behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+//		System.out.println(String.format("Vége behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 	public void trainHeadPassOut(int train_id, double t) {
-		System.out.println(String.format("Eleje kihaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+//		System.out.println(String.format("Eleje kihaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 	public void trainTailPassOut(int train_id, double t) {
-		System.out.println(String.format("Vége kihaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+//		System.out.println(String.format("Vége kihaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 	public void trainStopped(int train_id, double t) {
-		System.out.println(String.format("Megállt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+//		System.out.println(String.format("Megállt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 	public void trainStarted(int train_id, double t) {
-		System.out.println(String.format("Elindult:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+//		System.out.println(String.format("Elindult:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+	}
+	public void mouseEntered(MouseEvent mouseevent) {
+		focusedrailsymbol= (RailSymbol) mouseevent.getSource();
+//		frame.setTitle(String.format("rail_id:%d", focusedrailsymbol.rail_id).replace('_', '\t'));
+	}
+	public void mouseClicked(MouseEvent mouseevent) {
+		if (mouseevent.getSource() instanceof RailSymbol) {
+			RailSymbol railsymbol= (RailSymbol) mouseevent.getSource();
+//			stringbuilder.append(railsymbol.rail_id+",");
+//			frame.setTitle(stringbuilder.toString());
+/*			if (raillist.isEmpty()) { 
+				raillist.add(29);
+				rails.getRailList(raillist, -1);
+				if (!rails.getRailList(raillist, railsymbol.rail_id)) {
+					raillist.clear();
+				}
+			};*/
+//			frame.setTitle(routebuilder.toString());
+		}
+	}
+	
+	public void mouseExited(MouseEvent mouseevent) {
+		focusedrailsymbol= null;
+//		frame.setTitle("");
+	}
+	public void mousePressed(MouseEvent mouseevent) {}
+	public void mouseReleased(MouseEvent mouseevent) {}	
+}
+
+class RailSymbol extends JPanel {
+	private static final long serialVersionUID = 1L;
+	private final Rails rails;
+	public final int rail_id;
+	private final JLayeredPane layeredpane;
+	private static final TreeMap<Rails.Status, Color> colors= new TreeMap<Rails.Status, Color>();
+	static {
+		colors.put(Rails.Status.F, Color.BLACK);
+		colors.put(Rails.Status.M, Color.RED);
+		colors.put(Rails.Status.P, Color.CYAN);
+		colors.put(Rails.Status.R, Color.GREEN);
+		colors.put(Rails.Status.S, Color.YELLOW);
+	}
+	public RailSymbol(Rails rails, int rail_id, JLayeredPane layeredpane) {
+		this.rails= rails;
+		this.rail_id= rail_id;
+		this.layeredpane= layeredpane;
+		layeredpane.add(this);
+		switch (rails.getType(rail_id)) {
+		case L:
+		case R:
+			layeredpane.moveToBack(this);
+			break;
+		case J:
+		case T:
+			layeredpane.moveToFront(this);
+			break;
+		}
+		setBounds(
+			Integer.min(rails.getX(rail_id), rails.getX(rail_id)+rails.getWidth(rail_id)+1)*8,
+			Integer.min(rails.getY(rail_id), rails.getY(rail_id)+rails.getHeight(rail_id))*16,
+			Integer.max(rails.getWidth(rail_id)+1, -rails.getWidth(rail_id)+1)*8,
+			Integer.max(rails.getHeight(rail_id)+1, -rails.getHeight(rail_id)+1)*16
+		);
+		setOpaque(false);
+		setVisible(true);
+	}
+	public void paint(Graphics graphics) {
+		super.paint(graphics);
+		int i;
+		switch (rails.getType(rail_id)) {
+		case T:
+			graphics.setColor(Color.BLACK);
+			i= -1;
+			while (++i<getWidth()-1) {
+				graphics.drawRect(i, 2*i+1, 1, 1);
+				graphics.drawRect(getWidth()-i-2, 2*i+1, 1, 1);
+			}
+			break;
+		case J:
+			// setBorder(BorderFactory.createLineBorder(Color.BLACK));
+			break;
+		case R:
+			graphics.setColor(colors.get(rails.getStatus(rail_id)));
+			graphics.fillRect(5, 7, getWidth()-10, 2);
+			String text= rails.getText(rail_id);
+			FontMetrics fontmetrics= graphics.getFontMetrics();
+			if (text!="" && fontmetrics.stringWidth(text)<=getWidth()-17) { // csak akkor írunk bele scöveget, ha belefér a vonal területére.
+				graphics.setColor(new Color(240, 240, 240));
+				graphics.fillRect((getWidth()>>1)-(fontmetrics.stringWidth(text)>>1), 0, fontmetrics.stringWidth(text), getHeight()-1);
+				graphics.setColor(colors.get(rails.getStatus(rail_id)));
+				graphics.drawString(text, (getWidth()>>1)-(fontmetrics.stringWidth(text)>>1), (fontmetrics.getAscent()+(getHeight()-(fontmetrics.getAscent()+fontmetrics.getDescent())>>1))-1);
+			}
+			break;
+		case L:
+			graphics.setColor(colors.get(rails.getStatus(rail_id)));
+			if (rails.getWidth(rail_id)==0) { // vertical (|)
+				graphics.drawLine(3, 9, 3, getHeight()-10);
+				graphics.drawLine(4, 9, 4, getHeight()-10);
+			} else if (rails.getHeight(rail_id)==0) { // horizontal (-)
+				graphics.drawLine(5, 7, getWidth()-6, 7);
+				graphics.drawLine(5, 8, getWidth()-6, 8);
+			} else if (0<rails.getHeight(rail_id)/rails.getWidth(rail_id)) { // left (\)
+				i= -1;
+				while (++i<getWidth()-9) {
+					graphics.drawRect(i+4, 2*i+9, 1, 1);
+				}
+			} else { // right (/)
+				i= -1;
+				while (++i<getWidth()-9) {
+					graphics.drawRect(i+4, getWidth()-2*i+13, 1, 1);
+				}
+			}
+			if (graphics.getColor().equals(Color.BLACK)) {
+				layeredpane.moveToBack(this);
+			}
+			break;
+		}
 	}
 }

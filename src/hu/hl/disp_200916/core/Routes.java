@@ -42,7 +42,7 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 	/**True, ha a route_record_no által megadott rekordot a Train target-jére mutató rekord követi (a vonat kihaladása zajlik).*/
 	public boolean isPassOut(int train_id, int route_record_no) {
 		RouteRecordKey routerecordkey= higherKey(new RouteRecordKey(train_id, route_record_no));
-		return routerecordkey!=null && routerecordkey.train_id==train_id && get(routerecordkey)==trains.getTargetItemId(train_id);
+		return routerecordkey!=null && routerecordkey.train_id==train_id && get(routerecordkey)==trains.getDestItemId(train_id);
 	}
 	/**A route_record_no által megadott rekord és utána levők közül a legközelebbi, R tipusú Rail-ra mutató route_record_no értéke.<br/>Ha nincs ilyen, akkor -1.<br/>Megfordulás esetén ez eredmény az azonosak közül az utolsó, amin nincs megfordulás.*/
 	public int getNearestTrackRouteRecordNo(int train_id, int route_record_no) {
@@ -140,8 +140,8 @@ class RouteRecordKey implements Comparable<RouteRecordKey> {
 		this.route_record_no= route_record_no;
 	}
 	public int compareTo(RouteRecordKey routerecordkey) {
-		int compare0= Integer.compare(train_id, routerecordkey.train_id)*2;
-		int compare1= Integer.compare(route_record_no, routerecordkey.route_record_no);
+		int compare0= Integer.compare(route_record_no, routerecordkey.route_record_no)*2;
+		int compare1= Integer.compare(train_id, routerecordkey.train_id);
 		return compare0+compare1;
 	}
 	public String toString() {
