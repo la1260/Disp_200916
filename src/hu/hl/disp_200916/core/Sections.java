@@ -8,16 +8,18 @@ import java.util.stream.Collectors;
 
 public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 	private static final long serialVersionUID= 1L;
+//	private final Rails rails;
 	private final Trains trains;
 	private final Routes routes;
 	private final static Random random= new Random();
 	/**A lista kétféle indexelésének (globális idő vagy globális pozició) kiválasztása.*/
 	public static enum Field {T, P}
 	private final DispCoreListener dispcorelistener;
-	public Sections(DispCoreListener dispcorelistener, Trains train, Routes route) {
+	public Sections(Rails rails, Trains trains, Routes routes, DispCoreListener dispcorelistener) {
+//		this.rails= rails;
+		this.trains= trains;
+		this.routes= routes;
 		this.dispcorelistener= dispcorelistener;
-		this.trains= train;
-		this.routes= route;
 	}
 	/**Megadja, hogy a train_id-nek van-e rekordja a listában.*/
 	private boolean containsTrainId(int train_id) {
@@ -29,82 +31,30 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 		return sectionrecordvalue.t+sectionrecordvalue.d;
 	}
 	/**1. Ellenőrzi, hogy az előírt mennyiségű vonat aktív-e. Ha nem, és van inaktív vonat, egyet véletlenszerűen kiválaszt azok közül, induló útvonallal látja el, aktíwá teszi, és ugrunk vissza az 1 . ponthoz.<br/>2. Minden vonatra t0-hoz képest dt-vel későbbi időpontban ellenőrzi a vonat gyorsulását, sebességét. Lassulás, állás esetén foglalni próbál, sikeres foglalás esetén átszámolja a Section-okat.<br/>3. Minden vonatra, az új t0+dt időpontbeli állapot alapján beállítja a vonat elejének pozíciója alapján a Rail-ok színét, a vonat végének pozíciója alapján felszabadítja a meghaladott Rail-okat. A kihaladt vonatok Active értékét false-ra állítja, Routes-ból és Sections-ból törli rekordjaikat, t0+dt értékével tér vissza.*/
-	public double step(double t0, double dt) {
+	public double step(double t0, double dt) throws Exception {
 		List<Integer> inactive_train_ids;
 		while (trains.keySet().stream().filter(train_id -> trains.isActive(train_id)).count()<3 && !(inactive_train_ids= trains.keySet().stream().filter(train_id -> !trains.isActive(train_id)).collect(Collectors.toList())).isEmpty()) {
 			int train_id= inactive_train_ids.get(random.nextInt(inactive_train_ids.size()));
+			routes.addRouteRecords(train_id, -1, false);
+			routes.setActivity(train_id, 0, routes.getRecordCount(train_id), true);
+			trains.setActivity(train_id, true);
+			
 			switch (train_id) {
 			case 0:
-				routes.put(0, 0, 27);
-		        routes.put(0, 1, 18);
-				routes.put(0, 2, 6);
-		        routes.put(0, 3, 0);
-				routes.put(0, 4, 8);
-				routes.put(0, 5, 2);
-				routes.put(0, 6, 12);
-				routes.put(0, 7, 20);
-				routes.put(0, 8, 22);
-				routes.put(0, 9, 22);
-				routes.put(0, 10, 20);
-				routes.put(0, 11, 12);
-				routes.put(0, 12, 2);
-				routes.put(0, 13, 8);
-				routes.put(0, 14, 0);
-				routes.put(0, 15, 6);
-				routes.put(0, 16, 18);
-				routes.put(0, 17, 27);
+//				routes.addRouteRecords(train_id, 1, false);
+//				routes.addRouteRecords(train_id, 2, false);
+				routes.addRouteRecords(train_id, 26, false);
 				break;
 			case 1:
-				routes.put(1, 0, 27);
-				routes.put(1, 1, 18);
-				routes.put(1, 2, 6);
-				routes.put(1, 3, 0);
-				routes.put(1, 4, 9);
-				routes.put(1, 5, 3);
-				routes.put(1, 6, 14);
-				routes.put(1, 7, 24);
-				routes.put(1, 8, 24);
-				routes.put(1, 9, 24);
-				routes.put(1, 10, 15);
-				routes.put(1, 11, 4);
-				routes.put(1, 12, 16);
-				routes.put(1, 13, 5);
-				routes.put(1, 14, 17);
-				routes.put(1, 15, 25);
-				routes.put(1, 16, 26);
-				routes.put(1, 17, 26);
-				routes.put(1, 18, 25);
-				routes.put(1, 19, 25);
-				routes.put(1, 20, 26);
-				routes.put(1, 21, 31);	
+				routes.addRouteRecords(train_id, 18, false);
 				break;
 			case 2:
-				routes.put(2, 0, 27);
-				routes.put(2, 1, 18);
-				routes.put(2, 2, 6);
-				routes.put(2, 3, 0);
-				routes.put(2, 4, 9);
-				routes.put(2, 5, 3);
-				routes.put(2, 6, 14);
-				routes.put(2, 7, 24);
-				routes.put(2, 8, 24);
-				routes.put(2, 9, 24);
-				routes.put(2, 10, 15);
-				routes.put(2, 11, 4);
-				routes.put(2, 12, 16);
-				routes.put(2, 13, 5);
-				routes.put(2, 14, 17);
-				routes.put(2, 15, 25);
-				routes.put(2, 16, 26);
-				routes.put(2, 17, 26);
-				routes.put(2, 18, 25);
-				routes.put(2, 19, 25);
-				routes.put(2, 20, 26);
-				routes.put(2, 21, 31);
+				routes.addRouteRecords(train_id, 19, false);
 				break;
 			}
-			trains.setActive(train_id, true);
-			System.out.println(train_id);
+			routes.setActivity(train_id, 0, routes.getRecordCount(train_id), true);
+			trains.setActivity(train_id, true);
+//			System.out.println(train_id+": "+routes.getTrainRouteRecords(train_id));
 		}
 		trains.keySet().stream().filter(train_id -> trains.isActive(train_id)).forEach(train_id -> {
 			if (getA(train_id, t0+dt)<0 || getA(train_id, t0+dt)==0 && getV(train_id, t0+dt)==0) {
@@ -112,7 +62,7 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 				int last_route_record_no= routes.getNearestTrackRouteRecordNo(train_id, first_route_record_no);
 				if (-1<last_route_record_no && routes.isUser(train_id, first_route_record_no, last_route_record_no, -1)) {
 					routes.setUser(train_id, first_route_record_no, last_route_record_no, train_id);
-					routes.setStatus(train_id, first_route_record_no, last_route_record_no, Rails.Status.R);
+					routes.setRailStatus(train_id, first_route_record_no, last_route_record_no, Rails.Status.R);
 					calc(train_id, t0, last_route_record_no);
 				}
 			}
@@ -128,7 +78,7 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 			if (vonat_all_leptetes_elott && !vonat_all_leptetes_utan) { 
 				int train_head_route_record_no_after_step= getRouteRecordNoP(train_id, train_head_position_after_step);
 				int train_tail_route_record_no_after_step= getRouteRecordNoP(train_id, train_tail_position_after_step);
-				routes.setStatus(train_id, train_tail_route_record_no_after_step, train_head_route_record_no_after_step, Rails.Status.M);
+				routes.setRailStatus(train_id, train_tail_route_record_no_after_step, train_head_route_record_no_after_step, Rails.Status.M);
 				dispcorelistener.trainStarted(train_id, t0+dt);
 			}
 			//A haladó vonat helyének pirosítása
@@ -146,7 +96,7 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 				int train_head_rail_no_before_step= routes.getRailNo(train_id, train_head_route_record_no_before_step);
 				int train_head_rail_no_after_step= routes.getRailNo(train_id, train_head_route_record_no_after_step);
 				if (train_head_rail_no_before_step!=train_head_rail_no_after_step) { //Megfordulásnál a felesleges foglalások-felszabadítások elkerülése miatt hiába különbözőek a Route rekordok, a Rail-oknak is különbözniök kell. 
-					routes.setStatus(train_id, train_head_route_record_no_before_step+1, train_head_route_record_no_after_step, Rails.Status.M);
+					routes.setRailStatus(train_id, train_head_route_record_no_before_step+1, train_head_route_record_no_after_step, Rails.Status.M);
 				}
 			}
 			//A haladó vonat által meghaladott Rail-ok felszabadítása.
@@ -158,21 +108,21 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 					train_tail_route_record_no_before_step= 0;
 					dispcorelistener.trainTailPassIn(train_id, t0+dt);
 				}
-				if (train_tail_position_before_step<=getPGMax(train_id) && getPGMax(train_id)<train_tail_position_after_step) { //Vaonat végének kihaladása: a vonat listában előforduló max. pg értéke a vonatvég léptetés előtti és léptetés utáni pozíciója közé esik.
+				if (train_tail_position_before_step<=getPGMax(train_id) && getPGMax(train_id)<train_tail_position_after_step) { //Vonat végének kihaladása: a vonat listában előforduló max. pg értéke a vonatvég léptetés előtti és léptetés utáni pozíciója közé esik.
 					train_tail_route_record_no_after_step= getRouteRecordNoMax(train_id)+1;
-					trains.setActive(train_id, false);
+					trains.setActivity(train_id, false);
 					dispcorelistener.trainTailPassOut(train_id, t0+dt);
 				}
 				int train_tail_rail_no_before_step= routes.getRailNo(train_id, train_tail_route_record_no_before_step);
 				int train_tail_rail_no_after_step= routes.getRailNo(train_id, train_tail_route_record_no_after_step);
 				if (train_tail_rail_no_before_step!=train_tail_rail_no_after_step) { //Megfordulásnál a felesleges foglalások-felszabadítások elkerülése miatt hiába különbözőek a Route rekordok, a Rail-oknak is különbözniök kell.
 					routes.setUser(train_id, train_tail_route_record_no_before_step, train_tail_route_record_no_after_step-1, -1);
-					routes.setStatus(train_id, train_tail_route_record_no_before_step, train_tail_route_record_no_after_step-1, Rails.Status.F);
+					routes.setRailStatus(train_id, train_tail_route_record_no_before_step, train_tail_route_record_no_after_step-1, Rails.Status.F);
 				}
 			}
 			//A megállt vonat sárgítása.
 			if (!vonat_all_leptetes_elott && vonat_all_leptetes_utan) {
-				routes.setStatus(train_id, train_tail_route_record_no_after_step, train_head_route_record_no_after_step, Rails.Status.S);
+				routes.setRailStatus(train_id, train_tail_route_record_no_after_step, train_head_route_record_no_after_step, Rails.Status.S);
 				dispcorelistener.trainStopped(train_id, t0+dt);
 			}
 			dispcorelistener.trainUpdate(train_id, t0+dt, getA(train_id, t0+dt), getV(train_id, t0+dt), getPIMax(train_id, t0+dt)-getPI(train_id, t0+dt), routes.isOriginalDirection(train_id,  getRouteRecordNoT(train_id, t0+dt)));	

@@ -4,6 +4,16 @@ import java.util.TreeMap;
 
 public class Trains extends TreeMap<Integer, Train> {
 	private static final long serialVersionUID= 1L;
+	/** Tarin léterhozása és hozzáadása a listához
+	 * 
+	 * @param train_id Azonosító
+	 * @param entry_rail_id Belépési pont (terminal)
+	 * @param dest_rail_id Kilépési pont (terminal)
+	 * @param l Hossz
+	 * @param v_max Max. sebesség
+	 * @param a_p Gyorsulás
+	 * @param a_n Lassulás
+	 */
 	public void put(int train_id, int entry_rail_id, int dest_rail_id, double l, double v_max, double a_p, double a_n) {
 		super.put(train_id, new Train(train_id, entry_rail_id, dest_rail_id, l, v_max, a_p, a_n));
 	}
@@ -23,7 +33,7 @@ public class Trains extends TreeMap<Integer, Train> {
 	public boolean isActive(int train_id) {
 		return get(train_id).active;
 	}
-	public void setActive(int train_id, boolean active) {
+	public void setActivity(int train_id, boolean active) {
 		get(train_id).active= active;
 	}
 	public String toString() {
@@ -60,6 +70,7 @@ class Train {
 		StringBuilder body= new StringBuilder();
 		header.setLength(0);
 		header.append("id\t"); body.append(id+"\t");
+		header.append("act\t"); body.append(active+"\t");
 		header.append("dest_item_id\t"); body.append(dest_rail_id+"\t");
 		header.append("l\t"); body.append(l+"\t");
 		header.append("v_max\t"); body.append(v_max+"\t");

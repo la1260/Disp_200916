@@ -7,12 +7,28 @@ import java.util.Vector;
 public class Rails extends TreeMap<Integer, Rail> { 
 	private static final long serialVersionUID= 1L;
 	public enum Type{T, R, L, J};
-	/** F: nem használt (fekete)<br/>R: fenntartott (zöld)<br/>M: mozgó vonat által elfoglalt (piros)<br/>S: álló vonat által elfoglalt (sárga)<br/>P: tervezés alatt (kék)*/
+	/** F: nem használt (fekete)<br/>R: fenntartott (zöld)<br/>M: mozgó vonat által elfoglalt (piros)<br/>S: álló vonat által elfoglalt (sárga)<br/>P: útvonal tervezés alatt (kék)*/
 	public enum Status{F, R, M, S, P};
 	private final DispCoreListener dispcorelistener;
 	public Rails(DispCoreListener dispcorelistener) {
 		this.dispcorelistener= dispcorelistener;
 	}
+	/** Rail léterhozása és hozzáadása a listához
+	 * @param rail_id Azonosító
+	 * @param type Típus
+	 * @param l Rail Hossz
+	 * @param next_a_rail_id Egyenes irányban, egyik vég felől csatlakozó Rail (ha nincs, -1)
+	 * @param next_b_rail_id Egyenes irányban, másik vég felől csatlakozó Rail (ha nincs, -1)
+	 * @param next_c_rail_id Kitérő irányban, egyik vég felől csatlakozó Rail (ha nincs, -1)
+	 * @param next_d_rail_id Kitérő irányban, másik vég felől csatlakozó Rail (ha nincs, -1)
+	 * @param v_max_0 Egyenes irányban max sebesség
+	 * @param v_max_1 Kitérő irányban max sebesség
+	 * @param x Szimbólum kezdőpontjának x koordinátája
+	 * @param y Szimbólum kezdőpontjának y koordinátája
+	 * @param width Szimbólum végpontjának távolsága x koordinátától
+	 * @param height Szimbólum végpontjának távolsága y koordinátától
+	 * @param name Beleírt scöveg
+	 */
 	public void put(int rail_id, Type type, double l, int next_a_rail_id, int next_b_rail_id, int next_c_rail_id, int next_d_rail_id, double v_max_0, double v_max_1, int x, int y, int width, int height, String name) {
 		super.put(rail_id, new Rail(rail_id, type, l, next_a_rail_id, next_b_rail_id, next_c_rail_id, next_d_rail_id, v_max_0, v_max_1, x, y, width, height, name));
 		setStatus(rail_id, Status.F);
@@ -147,6 +163,7 @@ class Rail {
 		header.append("v_max_0\t"); body.append(v_max.get(0)+"\t");
 		header.append("v_max_1\t"); body.append(v_max.get(1)+"\t");
 		header.append("user\t"); body.append(user+"\t");
+		header.append("stat\t"); body.append(status+"\t");
 		header.setCharAt(header.length()-1, '\r'); body.setCharAt(body.length()-1, '\r');
 		return header.toString()+body.toString();
 	}

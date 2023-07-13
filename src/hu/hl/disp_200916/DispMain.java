@@ -3,6 +3,8 @@ package hu.hl.disp_200916;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.TreeMap;
@@ -15,28 +17,28 @@ import javax.swing.JTextArea;
 import hu.hl.disp_200916.core.DispCoreListener;
 import hu.hl.disp_200916.core.Rails;
 import hu.hl.disp_200916.core.Routes;
-import hu.hl.disp_200916.core.RouteBuilder;
 import hu.hl.disp_200916.core.Sections;
 import hu.hl.disp_200916.core.Trains;
-import hu.hl.disp_200916.core.Rails.Type;
 
-public class Main implements DispCoreListener, MouseListener {
+public class DispMain implements DispCoreListener, MouseListener, KeyListener {
 	private Rails rails= new Rails(this);
 	private Trains trains= new Trains();
 	private Routes routes= new Routes(rails, trains);
-	private Sections sections= new Sections(this, trains, routes);
+	private Sections sections= new Sections(rails, trains, routes, this);
 	private TreeMap<Integer, RailSymbol> railsymbols= new TreeMap<Integer, RailSymbol>();
 	private JFrame frame= new JFrame();
 	private RailSymbol focusedrailsymbol= null;
 	private StringBuilder stringbuilder= new StringBuilder();
-	public static void main(String[] args) {
-		new Main();
+	private double t;
+	public static void main(String[] args) throws Exception {
+		new DispMain();
 	}
-	public Main() {
+	public DispMain() throws Exception {
 		frame.setLayout(null);
 		frame.setBounds(200, 40, 800, 500);
 		frame.setVisible(true);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.addKeyListener(this);
 		frame.setLayeredPane(new JLayeredPane());
 //		frame.getLayeredPane().setBackground(Color.BLACK);
 		frame.getLayeredPane().setOpaque(true);
@@ -107,21 +109,20 @@ public class Main implements DispCoreListener, MouseListener {
 //		routebuilder.clear();
 //		System.exit(16);
 		
-		trains.put(0, 27, 27, 100, 120/3.6, 0.398, -0.796);
-		trains.put(1, 27, 31, 100, 90/3.6, 0.398, -0.796);
-		trains.put(2, 27, 31, 100, 90/3.6, 0.398, -0.796);
+		trains.put(0, 28, 27, 100, 120/3.6, 0.398, -0.796);
+		trains.put(1, 29, 27, 100, 21.6/3.6, 0.398, -0.796);
+		trains.put(2, 30, 31, 100, 90/3.6, 0.398, -0.796);
 		
-
-
-		double t= 0;
-		while (Math.rint(t*10)<6400) {
-			t= Math.rint(sections.step(t, 0.1)*10)/10;
-			try {
-				Thread.sleep(1);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
+		t= 0;
+		
+//		while (Math.rint(t*10)<10000) {
+//			t= Math.rint(sections.step(t, 0.1)*10)/10;
+//			try {
+//				Thread.sleep(100);
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
+//		}
 		jtextarea.setText(stringbuilder.toString());
 
 	}
@@ -138,22 +139,22 @@ public class Main implements DispCoreListener, MouseListener {
 		if (focusedrailsymbol!=null) {
 			int rail_id= railsymbols.entrySet().stream().filter(e -> e.getValue().equals(focusedrailsymbol)).findFirst().get().getKey();
 			if (rails.getUser(rail_id)==train_id) {
-//				frame.setTitle(String.format("rail_id:%d, train id:%d, t:%.2f, a:%.2f, v:%.2f, pr:%.2f, d:%b", rail_id, train_id, t, a, v, pr, isOriginalDir).replace('_', '\t'));
+				frame.setTitle(String.format("rail_id:%d, train id:%d, t:%.2f, a:%.2f, v:%.2f, pr:%.2f, d:%b", rail_id, train_id, t, a, v, pr, isOriginalDir).replace('_', '\t'));
 			}
 		}
 //		stringbuilder.append(String.format("Train id_%d_t_%.2f_a_%.2f_v_%.2f_pr_%.2f_oridir_%b\n", train_id, t, a, v, pr, isOriginalDir).replace('_', '\t'));
 	}
 	public void trainHeadPassIn(int train_id, double t) {
-//		System.out.println(String.format("Eleje behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+		System.out.println(String.format("Eleje behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 	public void trainTailPassIn(int train_id, double t) {
-//		System.out.println(String.format("Vége behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+		System.out.println(String.format("Vége behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 	public void trainHeadPassOut(int train_id, double t) {
-//		System.out.println(String.format("Eleje kihaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+		System.out.println(String.format("Eleje kihaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 	public void trainTailPassOut(int train_id, double t) {
-//		System.out.println(String.format("Vége kihaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+		System.out.println(String.format("Vége kihaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
 	}
 	public void trainStopped(int train_id, double t) {
 //		System.out.println(String.format("Megállt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
@@ -168,8 +169,8 @@ public class Main implements DispCoreListener, MouseListener {
 	public void mouseClicked(MouseEvent mouseevent) {
 		if (mouseevent.getSource() instanceof RailSymbol) {
 			RailSymbol railsymbol= (RailSymbol) mouseevent.getSource();
-//			stringbuilder.append(railsymbol.rail_id+",");
-//			frame.setTitle(stringbuilder.toString());
+			stringbuilder.append(railsymbol.rail_id+",");
+			frame.setTitle(stringbuilder.toString());
 /*			if (raillist.isEmpty()) { 
 				raillist.add(29);
 				rails.getRailList(raillist, -1);
@@ -186,7 +187,20 @@ public class Main implements DispCoreListener, MouseListener {
 //		frame.setTitle("");
 	}
 	public void mousePressed(MouseEvent mouseevent) {}
-	public void mouseReleased(MouseEvent mouseevent) {}	
+	public void mouseReleased(MouseEvent mouseevent) {}
+
+	public void keyPressed(KeyEvent keyevent) {
+		try {
+			switch (keyevent.getKeyCode()) {
+			case KeyEvent.VK_RIGHT: t= Math.rint(sections.step(t, 0.1)*10)/10; break;
+			case KeyEvent.VK_LEFT: t= Math.rint(sections.step(t, -0.1)*10)/10; break;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	public void keyReleased(KeyEvent keyevent) {}
+	public void keyTyped(KeyEvent keyevent) {}	
 }
 
 class RailSymbol extends JPanel {

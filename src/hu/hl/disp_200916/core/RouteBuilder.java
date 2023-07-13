@@ -5,18 +5,12 @@ import java.util.Vector;
 public class RouteBuilder extends Vector<Integer> {
 	private static final long serialVersionUID = 1L;
 	private final Rails rails;
-	private final Routes routes;
-	/**RouteBuilder létrehozása egy (Terminal) elemből, cél megadása nélkül.*/
-	public RouteBuilder(Rails rails, Routes routes, int rail_id_0) {
+//	private final Trains trains;
+//	private final Routes routes;
+	public RouteBuilder(Rails rails, Trains trains, Routes routes) {
 		this.rails= rails;
-		this.routes= routes;
-		super.add(rail_id_0);
-		this.add((int) rails.getOutRailIds(rail_id_0, -1).firstElement());
-	}
-	/**RouteBuilder létrehozása két elemből, cél megadása add függvénnyel lehetséges.*/
-	public RouteBuilder(Rails rails, Routes routes, int rail_id_0, int rail_id_1) {
-		this(rails, routes, rail_id_0);
-		super.add(rail_id_1);
+//		this.trains= trains;
+//		this.routes= routes;
 	}
 	/**Útvonal felépítése a lista két utolsó tagjától a megadott rail_id utáni, következő védett szakaszt megelőző Track-ig. Visszatérési érték: true, ha az útvonal létrehozható volt, false, ha nem (ekkor a lista is üres)*/
 	public boolean add(int rail_id, boolean marad) {
