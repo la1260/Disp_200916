@@ -43,28 +43,26 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 			case 0:
 //				routes.addRouteRecords(train_id, 1, false);
 //				routes.addRouteRecords(train_id, 2, false);
-				routes.addRouteRecords(train_id, 26, false);
+//				routes.addRouteRecords(train_id, 26, false);
 				break;
 			case 1:
-				routes.addRouteRecords(train_id, 18, false);
+				routes.addRouteRecords(train_id, 28, false);
 				break;
 			case 2:
-				routes.addRouteRecords(train_id, 19, false);
+//				routes.addRouteRecords(train_id, 19, false);
 				break;
 			}
 			routes.setActivity(train_id, 0, routes.getRecordCount(train_id), true);
 			trains.setActivity(train_id, true);
 //			System.out.println(train_id+": "+routes.getTrainRouteRecords(train_id));
 		}
-		trains.keySet().stream().filter(train_id -> trains.isActive(train_id)).forEach(train_id -> {
-			if (getA(train_id, t0+dt)<0 || getA(train_id, t0+dt)==0 && getV(train_id, t0+dt)==0) {
-				int first_route_record_no= getRouteRecordNoT(train_id, t0+dt)+1;
-				int last_route_record_no= routes.getNearestTrackRouteRecordNo(train_id, first_route_record_no);
-				if (-1<last_route_record_no && routes.isUser(train_id, first_route_record_no, last_route_record_no, -1)) {
-					routes.setUser(train_id, first_route_record_no, last_route_record_no, train_id);
-					routes.setRailStatus(train_id, first_route_record_no, last_route_record_no, Rails.Status.R);
-					calc(train_id, t0, last_route_record_no);
-				}
+		trains.keySet().stream().filter(train_id -> trains.isActive(train_id) && (getA(train_id, t0+dt)<0 || getA(train_id, t0+dt)==0 && getV(train_id, t0+dt)==0)).forEach(train_id -> {
+			int first_route_record_no= getRouteRecordNoT(train_id, t0+dt)+1;
+			int last_route_record_no= routes.getNearestTrackRouteRecordNo(train_id, first_route_record_no);
+			if (-1<last_route_record_no && routes.isUser(train_id, first_route_record_no, last_route_record_no, -1)) {
+				routes.setUser(train_id, first_route_record_no, last_route_record_no, train_id);
+				routes.setRailStatus(train_id, first_route_record_no, last_route_record_no, Rails.Status.R);
+				calc(train_id, t0, last_route_record_no);
 			}
 		});
 		trains.keySet().stream().filter(train_id -> trains.isActive(train_id)).forEach(train_id -> {
@@ -72,8 +70,8 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 			boolean vonat_all_leptetes_utan= getV(train_id, t0+dt)==0;
 			double train_head_position_before_step= getPG(train_id, t0);
 			double train_head_position_after_step= getPG(train_id, t0+dt);
-			double train_tail_position_before_step= getPG(train_id, t0)-trains.getL(train_id); 
-			double train_tail_position_after_step= getPG(train_id, t0+dt)-trains.getL(train_id);
+			double train_tail_position_before_step= train_head_position_before_step-trains.getL(train_id); 
+			double train_tail_position_after_step= train_head_position_after_step-trains.getL(train_id);
 			//A sárgított vonat pirosítása elinduláskor.
 			if (vonat_all_leptetes_elott && !vonat_all_leptetes_utan) { 
 				int train_head_route_record_no_after_step= getRouteRecordNoP(train_id, train_head_position_after_step);

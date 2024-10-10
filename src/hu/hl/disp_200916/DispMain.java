@@ -3,19 +3,24 @@ package hu.hl.disp_200916;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.Optional;
 import java.util.TreeMap;
 
 import javax.swing.JFrame;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.Timer;
 
 import hu.hl.disp_200916.core.DispCoreListener;
 import hu.hl.disp_200916.core.Rails;
+import hu.hl.disp_200916.core.RouteBuilder;
 import hu.hl.disp_200916.core.Routes;
 import hu.hl.disp_200916.core.Sections;
 import hu.hl.disp_200916.core.Trains;
@@ -25,11 +30,13 @@ public class DispMain implements DispCoreListener, MouseListener, KeyListener {
 	private Trains trains= new Trains();
 	private Routes routes= new Routes(rails, trains);
 	private Sections sections= new Sections(rails, trains, routes, this);
+	private RouteBuilder routebuilder= new RouteBuilder(rails);
 	private TreeMap<Integer, RailSymbol> railsymbols= new TreeMap<Integer, RailSymbol>();
 	private JFrame frame= new JFrame();
 	private RailSymbol focusedrailsymbol= null;
 	private StringBuilder stringbuilder= new StringBuilder();
 	private double t;
+	private Timer timer;
 	public static void main(String[] args) throws Exception {
 		new DispMain();
 	}
@@ -112,17 +119,24 @@ public class DispMain implements DispCoreListener, MouseListener, KeyListener {
 		trains.put(0, 28, 27, 100, 120/3.6, 0.398, -0.796);
 		trains.put(1, 29, 27, 100, 21.6/3.6, 0.398, -0.796);
 		trains.put(2, 30, 31, 100, 90/3.6, 0.398, -0.796);
-		
+	
+		// 20, 12, 2, 9, 0, 6, 18, 27
+	
 		t= 0;
-		
-//		while (Math.rint(t*10)<10000) {
-//			t= Math.rint(sections.step(t, 0.1)*10)/10;
-//			try {
-//				Thread.sleep(100);
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-//		}
+
+		timer= new Timer(250, new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					t= Math.rint(sections.step(t, 0.01)*100)/100;
+					if (10000<=Math.rint(t*10)) {
+						timer.stop();
+					}
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
+		timer.start();
 		jtextarea.setText(stringbuilder.toString());
 
 	}
@@ -145,40 +159,43 @@ public class DispMain implements DispCoreListener, MouseListener, KeyListener {
 //		stringbuilder.append(String.format("Train id_%d_t_%.2f_a_%.2f_v_%.2f_pr_%.2f_oridir_%b\n", train_id, t, a, v, pr, isOriginalDir).replace('_', '\t'));
 	}
 	public void trainHeadPassIn(int train_id, double t) {
-		System.out.println(String.format("Eleje behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+		System.out.println(String.format("Eleje behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*1000)/1000).replace('_', '\t'));
 	}
 	public void trainTailPassIn(int train_id, double t) {
-		System.out.println(String.format("Vége behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+		System.out.println(String.format("Vége behaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*1000)/1000).replace('_', '\t'));
 	}
 	public void trainHeadPassOut(int train_id, double t) {
-		System.out.println(String.format("Eleje kihaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+		System.out.println(String.format("Eleje kihaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*1000)/1000).replace('_', '\t'));
 	}
 	public void trainTailPassOut(int train_id, double t) {
-		System.out.println(String.format("Vége kihaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+		System.out.println(String.format("Vége kihaladt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*1000)/1000).replace('_', '\t'));
 	}
 	public void trainStopped(int train_id, double t) {
-//		System.out.println(String.format("Megállt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+		System.out.println(String.format("Megállt:_%1$d_t:_%2$.2f", train_id, Math.rint(t*1000)/1000).replace('_', '\t'));
 	}
 	public void trainStarted(int train_id, double t) {
-//		System.out.println(String.format("Elindult:_%1$d_t:_%2$.2f", train_id, Math.rint(t*10)/10).replace('_', '\t'));
+//		System.out.println(String.format("Elindult:_%1$d_t:_%2$.2f", train_id, Math.rint(t*1000)/1000).replace('_', '\t'));
 	}
 	public void mouseEntered(MouseEvent mouseevent) {
 		focusedrailsymbol= (RailSymbol) mouseevent.getSource();
 //		frame.setTitle(String.format("rail_id:%d", focusedrailsymbol.rail_id).replace('_', '\t'));
 	}
 	public void mouseClicked(MouseEvent mouseevent) {
-		if (mouseevent.getSource() instanceof RailSymbol) {
-			RailSymbol railsymbol= (RailSymbol) mouseevent.getSource();
-			stringbuilder.append(railsymbol.rail_id+",");
-			frame.setTitle(stringbuilder.toString());
-/*			if (raillist.isEmpty()) { 
-				raillist.add(29);
-				rails.getRailList(raillist, -1);
-				if (!rails.getRailList(raillist, railsymbol.rail_id)) {
-					raillist.clear();
-				}
-			};*/
-//			frame.setTitle(routebuilder.toString());
+		switch (mouseevent.getButton()) {
+		case MouseEvent.BUTTON1: //left
+			if (mouseevent.getSource() instanceof RailSymbol) {
+				RailSymbol railsymbol= (RailSymbol) mouseevent.getSource();
+				int train_id= rails.getUser(railsymbol.rail_id);
+				routes.get
+				System.out.println(train_id);
+			}
+			break;
+		case MouseEvent.BUTTON2: //centr
+			frame.setTitle("centr");
+			break;
+		case MouseEvent.BUTTON3: //right
+			frame.setTitle("right");
+			break;
 		}
 	}
 	

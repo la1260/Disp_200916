@@ -113,33 +113,25 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 			}
 			return true;
 		} else {
-			return true;
-
-/*			int utsoelotti= getRailNo(train_id, getRecordCount(train_id)-2);
+			int utsoelotti= getRailNo(train_id, getRecordCount(train_id)-2);
 			int utso= getRailNo(train_id, getRecordCount(train_id)-1);
-			boolean res= rails.getOutRailIds(utso, utsoelotti).stream().anyMatch(i -> {
+			return rails.getOutRailIds(utso, utsoelotti).stream().anyMatch(i -> {
+				if (train_id==1 && i==27) {
+					System.out.print("");
+				}
 				try {
 					RouteRecordKey routerecordkey= new RouteRecordKey(train_id, getRecordCount(train_id));
 					put(routerecordkey, i);
-					boolean result;
-					addRouteRecords(train_id, target_rail_id, result= i==target_rail_id);
-					if (result || found) {
-					} else {
-						if (train_id==0) {
-							System.out.println("");
-						}
-						keySet().removeIf(k -> routerecordkey.train_id==k.train_id && routerecordkey.route_record_no<=k.route_record_no);
+					boolean result= addRouteRecords(train_id, target_rail_id, i==target_rail_id || found) || found;
+					if (!result) {
+						remove(routerecordkey); 
+//						keySet().removeIf(k -> routerecordkey.train_id==k.train_id && routerecordkey.route_record_no<=k.route_record_no);
 					}
 					return result;
 				} catch (Exception e) {
-					return false;
+					return found;
 				}
 			});
-			if (train_id==0) {
-//				System.out.println(train_id+": "+getTrainRouteRecords(train_id));
-//				System.out.println(keySet().stream().filter(k -> k.train_id==train_id).allMatch(k -> k.active));
-			}
-			return res;*/
 		}
 	}
 	/** teszteléshez */
@@ -162,7 +154,14 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 	public void setRailStatus(int train_id, int first_route_record_no, int last_route_record_no, Rails.Status status) {
 		entrySet().stream().filter(e0 -> e0.getKey().active && e0.getKey().train_id==train_id && first_route_record_no<=e0.getKey().route_record_no && e0.getKey().route_record_no<=last_route_record_no).forEach(e1 -> rails.setStatus(e1.getValue(), status));
 	}
-/*
+	/**A megadott Train listában szereplő utolsó előtti rail id-je.*/
+	public int getPrevLastItem(int train_id) {
+		return entrySet().stream().filter(e -> e.getKey().train_id==train_id).collect({} -> new Vector<Integer>()  ) ; 
+	}	
+	/**A megadott Train listában szereplő utolsó rail id-je.*/
+	public int getLastItem(int train_id) {
+		return entrySet().stream().filter(e -> e.getKey().train_id==train_id).map(e -> e.getValue()).reduce((e, a) -> a= e).get();
+	}
 	public String toString() {
 		StringBuilder header= new StringBuilder();
 		StringBuilder body= new StringBuilder();
@@ -186,7 +185,6 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 		});
 		return header.toString()+body.toString();
 	}
-*/	
 }
 
 class RouteRecordKey implements Comparable<RouteRecordKey> {
