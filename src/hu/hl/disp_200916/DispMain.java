@@ -9,7 +9,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.Optional;
 import java.util.TreeMap;
 import java.util.Vector;
 
@@ -21,8 +20,6 @@ import javax.swing.Timer;
 
 import hu.hl.disp_200916.core.DispCoreListener;
 import hu.hl.disp_200916.core.Rails;
-import hu.hl.disp_200916.core.Rails.Type;
-import hu.hl.disp_200916.core.RouteBuilder;
 import hu.hl.disp_200916.core.Routes;
 import hu.hl.disp_200916.core.Sections;
 import hu.hl.disp_200916.core.Trains;
