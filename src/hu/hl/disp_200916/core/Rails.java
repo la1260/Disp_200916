@@ -75,7 +75,7 @@ public class Rails extends TreeMap<Integer, Rail> {
 		return result;
 	}
 	//Dinamikus függvények
-	/**A megadott Rail User-jének értéke. J esetén a csomóponthoz csatlakozó összes Rail-t, L esetén a Rail-hoz harmadikként megadott (a Link-et keresztező másik Link) Rail-t vizsgálja.*/
+	/**A megadott Rail User-jének azonosítója. J esetén a csomóponthoz csatlakozó összes Rail-t, L esetén a Rail-hoz harmadikként megadott (a Link-et keresztező másik Link) Rail-t vizsgálja. Ha nincs user, -1.*/
 	public int getUser(int rail_id) {
 		Rail rail= get(rail_id);		
 		Integer result= rail.user;

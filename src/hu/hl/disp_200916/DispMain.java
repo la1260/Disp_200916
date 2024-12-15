@@ -11,6 +11,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.Vector;
 
 import javax.swing.JFrame;
 import javax.swing.JLayeredPane;
@@ -20,6 +21,7 @@ import javax.swing.Timer;
 
 import hu.hl.disp_200916.core.DispCoreListener;
 import hu.hl.disp_200916.core.Rails;
+import hu.hl.disp_200916.core.Rails.Type;
 import hu.hl.disp_200916.core.RouteBuilder;
 import hu.hl.disp_200916.core.Routes;
 import hu.hl.disp_200916.core.Sections;
@@ -30,7 +32,6 @@ public class DispMain implements DispCoreListener, MouseListener, KeyListener {
 	private Trains trains= new Trains();
 	private Routes routes= new Routes(rails, trains);
 	private Sections sections= new Sections(rails, trains, routes, this);
-	private RouteBuilder routebuilder= new RouteBuilder(rails);
 	private TreeMap<Integer, RailSymbol> railsymbols= new TreeMap<Integer, RailSymbol>();
 	private JFrame frame= new JFrame();
 	private RailSymbol focusedrailsymbol= null;
@@ -127,7 +128,7 @@ public class DispMain implements DispCoreListener, MouseListener, KeyListener {
 		timer= new Timer(250, new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					t= Math.rint(sections.step(t, 0.01)*100)/100;
+					t= Math.rint(sections.step(t, 0.25)*100)/100;
 					if (10000<=Math.rint(t*10)) {
 						timer.stop();
 					}
@@ -180,23 +181,38 @@ public class DispMain implements DispCoreListener, MouseListener, KeyListener {
 		focusedrailsymbol= (RailSymbol) mouseevent.getSource();
 //		frame.setTitle(String.format("rail_id:%d", focusedrailsymbol.rail_id).replace('_', '\t'));
 	}
+	private Vector<Integer> newroute= null;
 	public void mouseClicked(MouseEvent mouseevent) {
 		switch (mouseevent.getButton()) {
 		case MouseEvent.BUTTON1: //left
 			if (mouseevent.getSource() instanceof RailSymbol) {
 				RailSymbol railsymbol= (RailSymbol) mouseevent.getSource();
-				int train_id= rails.getUser(railsymbol.rail_id);
-				routes.get
-				System.out.println(train_id);
+				int rail_id= railsymbol.rail_id;
+				int train_id= rails.getUser(rail_id);
+				if (newroute==null) { //Nincs folyamatban útvonal létrehozás.
+					if (-1<train_id) {
+						newroute= routes.getNewRoute(train_id); //Nincs folyamatban útvonal létrehozás, és van Train a klikkentett Rail-on -> indul az útvonal létrehozás.
+					} else {
+						//Nincs folyamatban útvonal létrehozás, és nincs Train a klikkentett Rail-on -> nem csinál semmit. 
+					}
+				} else {
+					if (!routes.addtoNewRoute(newroute, rail_id, false)) { //Folyamatban van útvonal létrehozás + új elem hozzáadása épülő Route-hoz. Ha sikertelen, a felépítés megszakad. 
+						newroute= null;
+					}
+				}
 			}
 			break;
 		case MouseEvent.BUTTON2: //centr
 			frame.setTitle("centr");
 			break;
-		case MouseEvent.BUTTON3: //right
+		case MouseEvent.BUTTON3: //Jobbgomb nyomásra az útvonal építés (ha van) megszakad.
+			if (newroute!=null) {
+				newroute= null;
+			}
 			frame.setTitle("right");
 			break;
 		}
+		System.out.println(((RailSymbol) mouseevent.getSource()).getRail_id()+", "+newroute);
 	}
 	
 	public void mouseExited(MouseEvent mouseevent) {
@@ -309,4 +325,7 @@ class RailSymbol extends JPanel {
 			break;
 		}
 	}
+	public int getRail_id() {
+		return rail_id;
+	}	
 }

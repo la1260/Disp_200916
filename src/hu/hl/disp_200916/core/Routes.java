@@ -3,6 +3,7 @@ package hu.hl.disp_200916.core;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Vector;
 
 public class Routes extends TreeMap<RouteRecordKey, Integer> {
 	private static final long serialVersionUID= 1L;
@@ -154,13 +155,26 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 	public void setRailStatus(int train_id, int first_route_record_no, int last_route_record_no, Rails.Status status) {
 		entrySet().stream().filter(e0 -> e0.getKey().active && e0.getKey().train_id==train_id && first_route_record_no<=e0.getKey().route_record_no && e0.getKey().route_record_no<=last_route_record_no).forEach(e1 -> rails.setStatus(e1.getValue(), status));
 	}
-	/**A megadott Train listában szereplő utolsó előtti rail id-je.*/
-	public int getPrevLastItem(int train_id) {
-		return entrySet().stream().filter(e -> e.getKey().train_id==train_id).collect({} -> new Vector<Integer>()  ) ; 
-	}	
-	/**A megadott Train listában szereplő utolsó rail id-je.*/
-	public int getLastItem(int train_id) {
-		return entrySet().stream().filter(e -> e.getKey().train_id==train_id).map(e -> e.getValue()).reduce((e, a) -> a= e).get();
+	/**A megadott Train listában szereplő két utolsó railjének id-jét tartalmazó lista.*/
+	public Vector<Integer> getNewRoute(int train_id) {
+		return entrySet().stream().filter(e -> e.getKey().train_id==train_id).collect(() -> new Vector<Integer>(), (v, e) -> {
+				v.add(e.getValue());
+				if (v.size()==3) v.remove(0);
+			}, (a, b) -> {});
+	}
+	/**A megadott routéhoz a megadott rail hozzáadása az útvonal felépítésével.*/
+	public boolean addtoNewRoute(Vector<Integer> route, int target_rail_id, boolean found) {
+		int utsoelotti= route.get(route.size()-2);
+		int utso= route.get(route.size()-1);
+		return rails.getOutRailIds(utso, utsoelotti).stream().anyMatch(i -> {
+			route.add(i);
+			boolean f= i==target_rail_id;
+			boolean result= f && !rails.getType(target_rail_id).equals(Rails.Type.R) || addtoNewRoute(route, target_rail_id, f || found) || found;
+			if (!result) {
+				route.remove(route.size()-1);
+			}
+			return result;
+		});
 	}
 	public String toString() {
 		StringBuilder header= new StringBuilder();
