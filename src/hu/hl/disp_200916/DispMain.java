@@ -25,22 +25,23 @@ import hu.hl.disp_200916.core.Sections;
 import hu.hl.disp_200916.core.Trains;
 
 public class DispMain implements DispCoreListener, MouseListener, KeyListener {
-	private Rails rails= new Rails(this);
-	private Trains trains= new Trains();
-	private Routes routes= new Routes(rails, trains);
-	private Sections sections= new Sections(rails, trains, routes, this);
-	private TreeMap<Integer, RailSymbol> railsymbols= new TreeMap<Integer, RailSymbol>();
-	private JFrame frame= new JFrame();
+	private final Rails rails= new Rails(this);
+	private final Trains trains= new Trains();
+	private final Routes routes= new Routes(rails, trains);
+	private final Sections sections= new Sections(rails, trains, routes, this);
+	private final TreeMap<Integer, RailSymbol> railsymbols= new TreeMap<Integer, RailSymbol>();
+	private final JFrame frame= new JFrame();
 	private RailSymbol focusedrailsymbol= null;
 	private StringBuilder stringbuilder= new StringBuilder();
 	private double t;
-	private Timer timer;
+	private final Timer timer;
+	private final JTextArea jtextarea;
 	public static void main(String[] args) throws Exception {
 		new DispMain();
 	}
 	public DispMain() throws Exception {
 		frame.setLayout(null);
-		frame.setBounds(200, 40, 800, 500);
+		frame.setBounds(200, 40, 1700, 500);
 		frame.setVisible(true);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.addKeyListener(this);
@@ -82,8 +83,8 @@ public class DispMain implements DispCoreListener, MouseListener, KeyListener {
 		rails.put(30, Rails.Type.T, 0, 23, -1, -1, -1, -1, -1, 46, 6, 0, 0, "");
 		rails.put(31, Rails.Type.T, 0, 26, -1, -1, -1, -1, -1, 10, 14, 0, 0, "");
 
-		JTextArea jtextarea= new JTextArea();
-		jtextarea.setBounds(500, 20, 200, 200);
+		jtextarea= new JTextArea();
+		jtextarea.setBounds(500, 20, 1150, 200);
 		jtextarea.setVisible(true);
 		frame.getLayeredPane().add(jtextarea);
 
@@ -126,6 +127,8 @@ public class DispMain implements DispCoreListener, MouseListener, KeyListener {
 			public void actionPerformed(ActionEvent e) {
 				try {
 					t= Math.rint(sections.step(t, 0.25)*100)/100;
+//					jtextarea.setText(sections.toString());
+					jtextarea.setText(routes.toString());
 					if (10000<=Math.rint(t*10)) {
 						timer.stop();
 					}
@@ -135,7 +138,6 @@ public class DispMain implements DispCoreListener, MouseListener, KeyListener {
 			}
 		});
 		timer.start();
-		jtextarea.setText(stringbuilder.toString());
 
 	}
 	public void railUpdate(int rail_id) {
@@ -176,7 +178,7 @@ public class DispMain implements DispCoreListener, MouseListener, KeyListener {
 	}
 	public void mouseEntered(MouseEvent mouseevent) {
 		focusedrailsymbol= (RailSymbol) mouseevent.getSource();
-//		frame.setTitle(String.format("rail_id:%d", focusedrailsymbol.rail_id).replace('_', '\t'));
+		//jtextarea.setText(String.format("rail_id:%d", focusedrailsymbol.rail_id).replace('_', '\t'));
 	}
 	private Vector<Integer> newroute= null;
 	public void mouseClicked(MouseEvent mouseevent) {
@@ -203,9 +205,6 @@ public class DispMain implements DispCoreListener, MouseListener, KeyListener {
 			frame.setTitle("centr");
 			break;
 		case MouseEvent.BUTTON3: //Jobbgomb nyomásra az útvonal építés (ha van) megszakad.
-			if (newroute!=null) {
-				newroute= null;
-			}
 			frame.setTitle("right");
 			break;
 		}
@@ -222,6 +221,7 @@ public class DispMain implements DispCoreListener, MouseListener, KeyListener {
 	public void keyPressed(KeyEvent keyevent) {
 		try {
 			switch (keyevent.getKeyCode()) {
+			case KeyEvent.VK_ESCAPE: if (newroute!=null) newroute= null; break;
 			case KeyEvent.VK_RIGHT: t= Math.rint(sections.step(t, 0.1)*10)/10; break;
 			case KeyEvent.VK_LEFT: t= Math.rint(sections.step(t, -0.1)*10)/10; break;
 			}

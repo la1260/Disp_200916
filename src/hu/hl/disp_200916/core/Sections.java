@@ -2,6 +2,7 @@ package hu.hl.disp_200916.core;
 
 import java.util.TreeMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -29,7 +30,7 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 		SectionRecordValue sectionrecordvalue= entrySet().stream().filter(e0 -> e0.getKey().train_id==train_id && e0.getKey().field.equals(Field.T)).max((e1, e2) -> Double.compare(e1.getKey().value, e2.getKey().value)).get().getValue();
 		return sectionrecordvalue.t+sectionrecordvalue.d;
 	}
-	/**1. Ellenőrzi, hogy az előírt mennyiségű vonat aktív-e. Ha nem, és van inaktív vonat, egyet véletlenszerűen kiválaszt azok közül, induló útvonallal látja el, aktíwá teszi, és ugrunk vissza az 1 . ponthoz.<br/>2. Minden vonatra t0-hoz képest dt-vel későbbi időpontban ellenőrzi a vonat gyorsulását, sebességét. Lassulás, állás esetén foglalni próbál, sikeres foglalás esetén átszámolja a Section-okat.<br/>3. Minden vonatra, az új t0+dt időpontbeli állapot alapján beállítja a vonat elejének pozíciója alapján a Rail-ok színét, a vonat végének pozíciója alapján felszabadítja a meghaladott Rail-okat. A kihaladt vonatok Active értékét false-ra állítja, Routes-ból és Sections-ból törli rekordjaikat, t0+dt értékével tér vissza.*/
+	/**<ol><li>Ellenőrzi, hogy az előírt mennyiségű vonat aktív-e. Ha nem, és van inaktív vonat, egyet véletlenszerűen kiválaszt azok közül, induló útvonallal látja el, aktíwá teszi, és ugrunk vissza az 1 . ponthoz.</li><li>Minden vonatra t0-hoz képest dt-vel későbbi időpontban ellenőrzi a vonat gyorsulását, sebességét. Lassulás, állás esetén foglalni próbál, sikeres foglalás esetén átszámolja a Section-okat.</li><li>Minden vonatra, az új t0+dt időpontbeli állapot alapján beállítja a vonat elejének pozíciója alapján a Rail-ok színét, a vonat végének pozíciója alapján felszabadítja a meghaladott Rail-okat. A kihaladt vonatok Active értékét false-ra állítja, Routes-ból és Sections-ból törli rekordjaikat, t0+dt értékével tér vissza.</li></ol>*/
 	public double step(double t0, double dt) throws Exception {
 		List<Integer> inactive_train_ids;
 		while (trains.keySet().stream().filter(train_id -> trains.isActive(train_id)).count()<3 && !(inactive_train_ids= trains.keySet().stream().filter(train_id -> !trains.isActive(train_id)).collect(Collectors.toList())).isEmpty()) {
@@ -202,7 +203,7 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 	}
 	/**A vonat gyorsulása t időpontban. Ha a t túlmutat az utolsó Section vég(idő)pontján vagy a vonat nem szerepel a listában, akkor visszatérési érték 0.*/
 	private double getA(int train_id, double t) {
-		Entry<SectionRecordKey, SectionRecordValue> e= floorEntry(new SectionRecordKey(train_id, Field.T, t));
+		Map.Entry<SectionRecordKey, SectionRecordValue> e= floorEntry(new SectionRecordKey(train_id, Field.T, t));
 		SectionRecordValue record;
 		if (!containsTrainId(train_id) || e==null || (record= e.getValue()).t+record.d<=t) {
 			return 0;
@@ -212,7 +213,7 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 	}
 	/**A vonat sebessége t időpontban. Ha a t túlmutat az utolsó Section vég(idő)pontján miközben nem kihaladás zajlik, vagy a vonat nem szerepel a listában, akkor visszatérési érték 0.*/
 	private double getV(int train_id, double t) {
-		Entry<SectionRecordKey, SectionRecordValue> e= floorEntry(new SectionRecordKey(train_id, Field.T, t));
+		Map.Entry<SectionRecordKey, SectionRecordValue> e= floorEntry(new SectionRecordKey(train_id, Field.T, t));
 		SectionRecordValue record;
 		if (!containsTrainId(train_id) || e==null || (record= e.getValue()).t+record.d<=t && !routes.isPassOut(train_id, record.route_record_no)) {
 			return 0;
@@ -222,7 +223,7 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 	}
 	/**A vonat poziciója t időpontban, a vonat indulásához képest. A listában nem szereplő vonat esetén a visszatérési érték -1.*/
 	private double getPG(int train_id, double t) {
-		Entry<SectionRecordKey, SectionRecordValue> e= floorEntry(new SectionRecordKey(train_id, Field.T, t));
+		Map.Entry<SectionRecordKey, SectionRecordValue> e= floorEntry(new SectionRecordKey(train_id, Field.T, t));
 		if (!containsTrainId(train_id) || e==null) {
 			return -1;
 		} else {
@@ -234,7 +235,7 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 	}
 	/**A vonat poziciója t időpontban, a Section Rail-jának a vonat mögötti kezdőpontjához képest. A listában nem szereplő vonat esetén a visszatérési érték 0.*/
 	private double getPI(int train_id, double t) {
-		Entry<SectionRecordKey, SectionRecordValue> e= floorEntry(new SectionRecordKey(train_id, Field.T, t));
+		Map.Entry<SectionRecordKey, SectionRecordValue> e= floorEntry(new SectionRecordKey(train_id, Field.T, t));
 		if (!containsTrainId(train_id) || e==null) {
 			return 0;
 		} else {
@@ -246,7 +247,7 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 	}	
 	/**A vonat Routes-beli rekordjának azonosítója t időpontban. Ha a vonat nem szerepel a listában, akkor visszatérési érték -1.*/
 	private int getRouteRecordNoT(int train_id, double t) {
-		Entry<SectionRecordKey, SectionRecordValue> e= floorEntry(new SectionRecordKey(train_id, Field.T, t));
+		Map.Entry<SectionRecordKey, SectionRecordValue> e= floorEntry(new SectionRecordKey(train_id, Field.T, t));
 		if (!containsTrainId(train_id) || e==null) {
 			return -1;
 		} else {
@@ -255,7 +256,7 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 	}
 	/**A vonat Routes-beli rekordjának azonosítója p pozicióban. Ha a vonat nem szerepel a listában, akkor visszatérési érték -1.*/
 	private int getRouteRecordNoP(int train_id, double p) {
-		Entry<SectionRecordKey, SectionRecordValue> e= floorEntry(new SectionRecordKey(train_id, Field.P, p));
+		Map.Entry<SectionRecordKey, SectionRecordValue> e= floorEntry(new SectionRecordKey(train_id, Field.P, p));
 		if (!containsTrainId(train_id) || e==null) {
 			return -1;
 		} else {
@@ -273,7 +274,7 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 	}
 	/**A megadott vonat legnagyobb, a pályára eső globális pozíció értékének lekérdezése. Ha a vonat nem szerepel a listában, akkor visszatérési érték -1.*/ 
 	private double getPGMax(int train_id) {
-		Entry<SectionRecordKey, SectionRecordValue> e= floorEntry(new SectionRecordKey(train_id, Field.T, Double.POSITIVE_INFINITY));
+		Map.Entry<SectionRecordKey, SectionRecordValue> e= floorEntry(new SectionRecordKey(train_id, Field.T, Double.POSITIVE_INFINITY));
 		if (!containsTrainId(train_id) || e==null) {
 			return -1;
 		} else {
@@ -282,7 +283,7 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 	}
 	/**A megadott vonat utolsó Route record no értékének lekérdezése. Ha a vonat nem szerepel a listában, akkor visszatérési érték -1.*/ 
 	private int getRouteRecordNoMax(int train_id) {
-		Entry<SectionRecordKey, SectionRecordValue> esectionrecord= floorEntry(new SectionRecordKey(train_id, Field.T, Double.POSITIVE_INFINITY));
+		Map.Entry<SectionRecordKey, SectionRecordValue> esectionrecord= floorEntry(new SectionRecordKey(train_id, Field.T, Double.POSITIVE_INFINITY));
 		if (!containsTrainId(train_id) || esectionrecord==null) {
 			return -1;
 		} else {
@@ -290,15 +291,18 @@ public class Sections extends TreeMap<SectionRecordKey, SectionRecordValue> {
 		}
 	}	
 	public String toString() {
-		StringBuilder header= new StringBuilder();
-		StringBuilder body= new StringBuilder();
-		entrySet().stream().filter(f -> f.getKey().field.equals(Field.T)).forEach(e -> {
-			header.setLength(0);
-			header.append(e.getKey().toString().split("\r")[0]+"\t"); body.append(e.getKey().toString().split("\r")[1]+"\t");
-			header.append(e.getValue().toString().split("\r")[0]+"\t"); body.append(e.getValue().toString().split("\r")[1]+"\t");
-			header.setCharAt(header.length()-1, '\r'); body.setCharAt(body.length()-1, '\r');
-		});
-		return (header.toString()+body.toString()).replace('.', ',');
+		return entrySet().stream().filter(f -> f.getKey().field.equals(Field.T)).collect(
+			() -> new StringBuilder(),
+			(stringbuilder, entry) -> {
+				if (stringbuilder.isEmpty()) {
+					stringbuilder.append(entry.getKey().toString().split("\r")[0]+"\t"+entry.getValue().toString().split("\r")[0]+"\t");
+					stringbuilder.append(System.getProperty("line.separator"));
+				}
+				stringbuilder.append(entry.getKey().toString().split("\r")[1]+"\t"+entry.getValue().toString().split("\r")[1]+"\t");
+				stringbuilder.append(System.getProperty("line.separator"));
+			},
+			(a, b) -> {}
+		).toString().replace('.', ',');
 	}
 }
 

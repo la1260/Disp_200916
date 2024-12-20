@@ -1,5 +1,6 @@
 package hu.hl.disp_200916.core;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -16,14 +17,14 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 	//Statikus függvények (visszatérési értékük csak az útvonaltól függ).
 	/**True, ha a route_record_no által megadott rekordon végighaladás után megfordulás történik.*/
 	public boolean isBeforeReversion(int train_id, int route_record_no) {
-		Optional<java.util.Map.Entry<RouteRecordKey, Integer>> o_route_record_no= entrySet().stream().filter(e -> e.getKey().active && e.getKey().train_id==train_id && e.getKey().route_record_no==route_record_no).findFirst();
-		Optional<java.util.Map.Entry<RouteRecordKey, Integer>> o_route_record_no_next= entrySet().stream().filter(e -> e.getKey().active && e.getKey().train_id==train_id && e.getKey().route_record_no==route_record_no+1).findFirst();
+		Optional<Map.Entry<RouteRecordKey, Integer>> o_route_record_no= entrySet().stream().filter(e -> e.getKey().active && e.getKey().train_id==train_id && e.getKey().route_record_no==route_record_no).findFirst();
+		Optional<Map.Entry<RouteRecordKey, Integer>> o_route_record_no_next= entrySet().stream().filter(e -> e.getKey().active && e.getKey().train_id==train_id && e.getKey().route_record_no==route_record_no+1).findFirst();
 		return o_route_record_no.isPresent() && o_route_record_no_next.isPresent() && o_route_record_no.get().getValue()==o_route_record_no_next.get().getValue();
 	}
 	/**True, ha a route_record_no által megadott rekordon az elindulás megfordulás után történik.*/
 	public boolean isAfterReversion(int train_id, int route_record_no) {
-		Optional<java.util.Map.Entry<RouteRecordKey, Integer>> o_route_record_no= entrySet().stream().filter(e -> e.getKey().active && e.getKey().train_id==train_id && e.getKey().route_record_no==route_record_no).findFirst();
-		Optional<java.util.Map.Entry<RouteRecordKey, Integer>> o_route_record_no_prev= entrySet().stream().filter(e -> e.getKey().active && e.getKey().train_id==train_id && e.getKey().route_record_no==route_record_no-1).findFirst();
+		Optional<Map.Entry<RouteRecordKey, Integer>> o_route_record_no= entrySet().stream().filter(e -> e.getKey().active && e.getKey().train_id==train_id && e.getKey().route_record_no==route_record_no).findFirst();
+		Optional<Map.Entry<RouteRecordKey, Integer>> o_route_record_no_prev= entrySet().stream().filter(e -> e.getKey().active && e.getKey().train_id==train_id && e.getKey().route_record_no==route_record_no-1).findFirst();
 		return o_route_record_no.isPresent() && o_route_record_no_prev.isPresent() && o_route_record_no.get().getValue()==o_route_record_no_prev.get().getValue();
 	}
 	/**True, ha a vonat a route_record_no által megadott rekord Rail-ján az elindulásnak megfelelő irányban közlkedik (a megjelenítést nem veszi figyelembe).*/
@@ -34,9 +35,18 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 	public boolean isPassOut(int train_id, int route_record_no) {
 		return entrySet().stream().anyMatch(e0 -> e0.getKey().active && e0.getKey().train_id==train_id && e0.getKey().route_record_no==route_record_no+1 && e0.getValue()==trains.getDestItemId(train_id));
 	}
+	/**True, ha a vonat route_record_no által megadott rekordja utolsó a listában és Rail.*/
+	public boolean isLastAndRail(int train_id, int route_record_no) {
+		TreeMap<RouteRecordKey, Integer> result= entrySet().stream().filter(e -> e.getKey().active && e.getKey().train_id==train_id && route_record_no<=e.getKey().route_record_no).collect(
+			() -> new TreeMap<RouteRecordKey, Integer>(),
+			(treemap, entry) -> treemap.put(entry.getKey(), entry.getValue()),
+			(treemap, entries) -> treemap.putAll(entries)
+		);
+		return result.size()==1 && rails.getType(result.lastEntry().getValue()).equals(Rails.Type.R);
+	}
 	/**A route_record_no által megadott rekord és utána levők közül a legközelebbi, R tipusú Rail-ra mutató route_record_no értéke.<br/>Ha nincs ilyen, akkor -1.<br/>Megfordulás esetén ez eredmény az azonosak közül az utolsó, amin nincs megfordulás.*/
 	public int getNearestTrackRouteRecordNo(int train_id, int route_record_no) {
-		Optional<java.util.Map.Entry<RouteRecordKey, Integer>> result= entrySet().stream().filter(e ->
+		Optional<Map.Entry<RouteRecordKey, Integer>> result= entrySet().stream().filter(e ->
 			e.getKey().active &&
 			e.getKey().train_id==train_id &&
 			route_record_no<=e.getKey().route_record_no &&
@@ -48,11 +58,9 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 	public double getPStart(int train_id, int route_record_no) {
 		return (isAfterReversion(train_id, route_record_no)) ? 10+trains.getL(train_id) : 0;
 	}
-	/**A route_record_no által megadott rekord Rail-ján a mozgás végének pozíciója. Értéke a Rail hossza, mínusz megfordulás vagy Train számára le nem foglalt Rail előtt 10m, kihaladáskor, ill. előbbiektől eltérő esetekben 0m.*/
+	/**A route_record_no által megadott rekord Rail-ján a mozgás végének pozíciója. Értéke a Rail hossza, mínusz megfordulás vagy Train számára le nem foglalt Rail előtt vagy utolsó elemen, ha az Rail 10m, kihaladáskor, ill. előbbiektől eltérő esetekben 0m.*/
 	public double getPEnd(int train_id, int route_record_no) {
-		return Math.max(rails.getL(get(new RouteRecordKey(train_id, route_record_no)))-((
-		(isBeforeReversion(train_id, route_record_no) || !isUser(train_id, route_record_no+1, route_record_no+1, train_id)) && !isPassOut(train_id, route_record_no)
-		) ? 10 : 0), 0);
+		return Math.max(rails.getL(get(new RouteRecordKey(train_id, route_record_no)))-(((isBeforeReversion(train_id, route_record_no) || !isUser(train_id, route_record_no+1, route_record_no+1, train_id) || isLastAndRail(train_id, route_record_no)) && !isPassOut(train_id, route_record_no)) ? 10 : 0), 0);
 	}
 	/**A route_record_no által megadott rekord Rail-jának max. haladási sebessége. J és L tipusú Rail-ok esetén a teljes váltókörzeten belül előforduló értékek minimuma.*/
 	public double getRailVMax(int train_id, int route_record_no) {
@@ -83,7 +91,7 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 	}
 	/**A route_record_no által megadott rekord Rail-jának aznosítója. Ha nem található, akkor -1.*/
 	public int getRailNo(int train_id, int route_record_no) {
-		Optional<java.util.Map.Entry<RouteRecordKey, Integer>> result= entrySet().stream().filter(e -> e.getKey().train_id==train_id && e.getKey().route_record_no==route_record_no).findFirst();
+		Optional<Map.Entry<RouteRecordKey, Integer>> result= entrySet().stream().filter(e -> e.getKey().train_id==train_id && e.getKey().route_record_no==route_record_no).findFirst();
 		return (result.isPresent()) ? result.get().getValue(): -1;
 	}
 	/**Megadja, hogy a train_id-nek hány rekordja van a listában.*/
@@ -137,13 +145,16 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 	}
 	/** teszteléshez */
 	public String getTrainRouteRecords(int train_id) {
-		StringBuilder result= new StringBuilder();
-		entrySet().stream().filter(e -> e.getKey().train_id==train_id).forEach(e -> result.append(e.getValue()+","));
-		return result.toString();
+		return entrySet()
+		  .stream()
+		  .filter(entry -> entry.getKey().train_id==train_id)
+		  .map(entry -> entry.getValue())
+		  .collect(() -> new StringBuilder(), (stringbuilder, value) -> stringbuilder.append(value+","), null)
+		  .toString();
 	}
 	/**A meadott vonatnak legalább 2 elemének kell lennie a listában.*/
 	//Dinamikus függvények (visszatérési értékük az aktuális user-től is függ).
-	/**A megadott Train first_route_rec_id-jétől last_route_rec_id-jáig levő rekordok Rail-jai user_train_id számára foglaltak.*/
+	/**A megadott Train first_route_rec_id-jétől last_route_rec_id-jáig levő rekordok Rail-jai user_train_id számára foglaltak. user_train_id= -1 esetén megkapjuk, hogy mind szabadok-e.*/
 	public boolean isUser(int train_id, int first_route_record_no, int last_route_record_no, int user_train_id) {
 		return entrySet().stream().filter(e0 -> e0.getKey().active && e0.getKey().train_id==train_id && first_route_record_no<=e0.getKey().route_record_no && e0.getKey().route_record_no<=last_route_record_no).allMatch(e1 -> rails.getUser(e1.getValue())==user_train_id);
 	}
@@ -177,27 +188,30 @@ public class Routes extends TreeMap<RouteRecordKey, Integer> {
 		});
 	}
 	public String toString() {
-		StringBuilder header= new StringBuilder();
-		StringBuilder body= new StringBuilder();
-		entrySet().forEach(e -> {
-			header.setLength(0);
-			header.append(e.getKey().toString().split("\r")[0]+"\t"); body.append(e.getKey().toString().split("\r")[1]+"\t");
-			header.append("rid\t"); body.append(e.getValue()+"\t");
-			header.append("rtp\t"); body.append(rails.getType(e.getValue())+"\t");
-			header.append("usr\t"); body.append(rails.getUser(e.getValue())+"\t");
-			header.append("stt\t"); body.append(rails.getStatus(e.getValue())+"\t");
-			header.append("act\t"); body.append((e.getKey().active)+"\t");
-			header.append("ikh\t"); body.append(isPassOut(e.getKey().train_id, e.getKey().route_record_no)+"\t");
-			header.append("bfr\t"); body.append(isBeforeReversion(e.getKey().train_id, e.getKey().route_record_no)+"\t");
-			header.append("afr\t"); body.append(isAfterReversion(e.getKey().train_id, e.getKey().route_record_no)+"\t");
-			header.append("ord\t"); body.append(isOriginalDirection(e.getKey().train_id, e.getKey().route_record_no)+"\t");
-			header.append("ntr\t"); body.append(getNearestTrackRouteRecordNo(e.getKey().train_id, e.getKey().route_record_no)+"\t");
-			header.append("pst\t"); body.append(getPStart(e.getKey().train_id, e.getKey().route_record_no)+"\t");
-			header.append("pen\t"); body.append(getPEnd(e.getKey().train_id, e.getKey().route_record_no)+"\t");
-			header.append("ivm\t"); body.append(getRailVMax(e.getKey().train_id, e.getKey().route_record_no)+"\t");
-			header.setCharAt(header.length()-1, '\n'); body.setCharAt(body.length()-1, '\n');
-		});
-		return header.toString()+body.toString();
+		StringBuilder[] result= entrySet().stream().collect(
+			() -> new StringBuilder[] {new StringBuilder(), new StringBuilder()},
+			(stringbuilders, entry) -> {
+				stringbuilders[0].setLength(0);
+				stringbuilders[0].append(entry.getKey().toString().split("\r")[0]+"\t"); stringbuilders[1].append(entry.getKey().toString().split("\r")[1]+"\t");
+				stringbuilders[0].append("rid\t"); stringbuilders[1].append(entry.getValue()+"\t");
+				stringbuilders[0].append("rtp\t"); stringbuilders[1].append(rails.getType(entry.getValue())+"\t");
+				stringbuilders[0].append("usr\t"); stringbuilders[1].append(rails.getUser(entry.getValue())+"\t");
+				stringbuilders[0].append("stt\t"); stringbuilders[1].append(rails.getStatus(entry.getValue())+"\t");
+				stringbuilders[0].append("act\t"); stringbuilders[1].append((entry.getKey().active)+"\t");
+				stringbuilders[0].append("ikh\t"); stringbuilders[1].append(isPassOut(entry.getKey().train_id, entry.getKey().route_record_no)+"\t");
+				stringbuilders[0].append("bfr\t"); stringbuilders[1].append(isBeforeReversion(entry.getKey().train_id, entry.getKey().route_record_no)+"\t");
+				stringbuilders[0].append("afr\t"); stringbuilders[1].append(isAfterReversion(entry.getKey().train_id, entry.getKey().route_record_no)+"\t");
+				stringbuilders[0].append("ord\t"); stringbuilders[1].append(isOriginalDirection(entry.getKey().train_id, entry.getKey().route_record_no)+"\t");
+				stringbuilders[0].append("lar\t"); stringbuilders[1].append(isLastAndRail(entry.getKey().train_id, entry.getKey().route_record_no)+"\t");
+				stringbuilders[0].append("ntr\t"); stringbuilders[1].append(getNearestTrackRouteRecordNo(entry.getKey().train_id, entry.getKey().route_record_no)+"\t");
+				stringbuilders[0].append("pst\t"); stringbuilders[1].append(getPStart(entry.getKey().train_id, entry.getKey().route_record_no)+"\t");
+				stringbuilders[0].append("pen\t"); stringbuilders[1].append(getPEnd(entry.getKey().train_id, entry.getKey().route_record_no)+"\t");
+				stringbuilders[0].append("ivm\t"); stringbuilders[1].append(getRailVMax(entry.getKey().train_id, entry.getKey().route_record_no)+"\t");
+				stringbuilders[0].append(System.getProperty("line.separator")); stringbuilders[1].append(System.getProperty("line.separator"));
+			},
+			(stringbuilders, entries) -> {}
+		);
+		return result[0].toString()+result[1].toString().replace('.', ',');
 	}
 }
 
